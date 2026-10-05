@@ -3,3 +3,8 @@
 !.env.example
 .postgres.env
 node_modules/
+.local/
+.eve/
+.workflow/
+.output/
+dist/

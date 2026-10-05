@@ -1,0 +1,8 @@
+{
+  "interests": ["AI agents", "stablecoins", "payments"],
+  "dates": ["2026-10-07", "2026-10-08"],
+  "availableFrom": "09:00",
+  "availableUntil": "20:00",
+  "limit": 5,
+  "transferMinutes": 30
+}

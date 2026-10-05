@@ -1,0 +1,323 @@
+{
+  "provenance": "VERIFIED from CLI and payment-status output on 2026-10-05",
+  "account": {
+    "id": "01a10c5c-618c-732b-b195-bbad4aa6debc",
+    "email": "sandro.schaier@pm.me",
+    "network": "Preprod",
+    "cliVersion": "1.0.4"
+  },
+  "organization": {
+    "id": "01a10c6e-dfdc-76d9-812b-ddf73c2eb224",
+    "slug": "token2049-event-guide-fmzfqu",
+    "name": "TOKEN2049 Event Guide",
+    "role": "owner"
+  },
+  "vendorId": "01a10c6f-d09d-764b-bf6d-b8df8c3046ee",
+  "coworkerId": "01a10c70-007d-717f-8b40-7c9fc2ddc564",
+  "personalWorkspaceAccess": {
+    "id": "01a10c70-01a1-70b0-a167-918dc1190ea4",
+    "coworkerId": "01a10c70-007d-717f-8b40-7c9fc2ddc564",
+    "workspaceId": "01a10c5c-82ef-7405-ba68-d0cebae2a8a9",
+    "status": "GRANTED"
+  },
+  "paymentNode": {
+    "checkedAt": "2026-10-05T14:43:53.197Z",
+    "network": "Preprod",
+    "paymentSourceType": "Web3CardanoV2",
+    "mpsBaseUrl": "http://127.0.0.1:3012/api/v1",
+    "paymentSourceId": "cmuvbmjvj00044cvbffdaej4i",
+    "policyId": "67ab0c92c4ac1610895a1c965ee50aba41a8f1513b15240723b3bd0b",
+    "smartContractAddress": "addr_test1wzs4e6wc95hkwezlccjw9mdvq0r0rsgx6zk34avptga3ftgn37w4g",
+    "sellerWalletId": "cmuvbmjvk00094cvb3vxc6f2z",
+    "sellerVkey": "db2fecd63be71b9a2a6bb8ac25453adf4606be5d3361e1a3f63a723b",
+    "sellerAddress": "addr_test1qrdjlmxk80n3hx32dwu2cf298t05vp47t5ekrcdr7ca8ywct5efu6vn2wj78hqepnzj66heq56lyfkmvhjehx43psprqylpzyl",
+    "balance": {
+      "status": "measured",
+      "httpStatus": 200,
+      "amount": [
+        {
+          "unit": "lovelace",
+          "quantity": "100000000"
+        },
+        {
+          "unit": "16a55b2a349361ff88c03788f93e1e966e5d689605d044fef722ddde0014df10745553444d",
+          "quantity": "100000000"
+        }
+      ]
+    },
+    "provenance": "VERIFIED: .local/payment-status.json checkedAt 2026-10-05T14:43:53.197Z; balance.httpStatus 200; amount quantities 100000000 lovelace and 100000000 test USDM atomic units. This address snapshot does not prove registration or settlement readiness.",
+    "database": "token2049_event_guide",
+    "databaseEvidence": "VERIFIED: .local/migrations.log:5 identifies PostgreSQL database token2049_event_guide at 127.0.0.1:5432."
+  },
+  "mpsRevision": "99d94cf31cad168a74281494e79d5cc56f34838d",
+  "model": {
+    "id": "glm-5.3-flash",
+    "baseUrl": "https://api.z.ai/api/coding/paas/v4",
+    "earlierGeneralEndpointError": "Insufficient balance or no resource package. Please recharge.",
+    "directTest": {
+      "status": 200,
+      "model": "glm-5.3-flash",
+      "reply": "READY",
+      "finishReason": "stop"
+    },
+    "correction": "Earlier general API error did not test the SEO bot endpoint.",
+    "eveTest": {
+      "provenance": "VERIFIED from .local/glm-seo-result.json",
+      "status": "waiting",
+      "messagePresent": true,
+      "failures": [],
+      "resultFile": ".local/glm-seo-result.json"
+    }
+  },
+  "pending": [],
+  "runtimeKeyImport": {
+    "imported": true,
+    "provenance": "REPORTED: coordinator states trusted-terminal runtime key import succeeded. VERIFIED: execution Task completed with the Coworker credential; this does not reveal the import command output."
+  },
+  "executionRehearsal": {
+    "provenance": "VERIFIED: .local/execution-task-completed.json task.status COMPLETED; worker journal stage completed and executionOnly true.",
+    "taskId": "01a10c7d-e7f8-739c-8c7e-61975074f88e",
+    "eventId": "01a10c7e-8c90-76ba-8de8-0f69ad6bf16e",
+    "sessionId": "wrun_01M467W6H8DBF04N6WGCRP1A4G",
+    "status": "COMPLETED",
+    "executionOnly": true,
+    "completedAt": "2026-10-05T14:36:22.554Z",
+    "resultFile": ".local/worker/01a10c7d-e7f8-739c-8c7e-61975074f88e.result.txt",
+    "resultSummary": "VERIFIED: saved result recommends The Base Case for Moving Money Onchain at 11:55-12:15 and The Next Era of Stablecoin Payments at 12:50-13:05 on 2026-10-07; both cite the official agenda.",
+    "paymentProof": false
+  },
+  "masumiRegistration": {
+    "status": "RegistrationConfirmed",
+    "registrationId": "cmuvd1v950002awvb15smizwk",
+    "agentIdentifier": "67ab0c92c4ac1610895a1c965ee50aba41a8f1513b15240723b3bd0b10d7fb0f14970d4779d0bb4fdda68aa0e72fdc3ab5a0fc11d130376dcd000000",
+    "supportedPaymentSourceIndex": 0,
+    "policyId": "67ab0c92c4ac1610895a1c965ee50aba41a8f1513b15240723b3bd0b",
+    "smartContractAddress": "addr_test1wzs4e6wc95hkwezlccjw9mdvq0r0rsgx6zk34avptga3ftgn37w4g",
+    "sellerVkey": "db2fecd63be71b9a2a6bb8ac25453adf4606be5d3361e1a3f63a723b",
+    "sellerAddress": "addr_test1qrdjlmxk80n3hx32dwu2cf298t05vp47t5ekrcdr7ca8ywct5efu6vn2wj78hqepnzj66heq56lyfkmvhjehx43psprqylpzyl",
+    "registrationTxHash": "61682d223b1eff5eb0732b75e33486881c781b0e9c7c94cc421720ef73fac274",
+    "checkedAt": "2026-10-05T14:51:40.339Z",
+    "confirmations": 3,
+    "provenance": "VERIFIED: .local/registration.json status RegistrationConfirmed, supportedPaymentSourceIndex 0, checkedAt 2026-10-05T14:51:40.339Z. .local/registration-status.json also records RegistrationConfirmed and CurrentTransaction.status Confirmed. Saved independent confirmations are 3; the MPS status snapshot reports confirmations 0. This proves registration evidence, not seller payment.",
+    "id": "cmuvd1v950002awvb15smizwk",
+    "state": "RegistrationConfirmed",
+    "apiBaseUrl": "http://127.0.0.1:3013",
+    "pricingType": "Dynamic",
+    "initialRequest": {
+      "provenance": "VERIFIED: .local/registration-response.json httpStatus 200, data.state RegistrationRequested, agentIdentifier null. HTTP success proves request acceptance, not chain confirmation.",
+      "id": "cmuvd1v950002awvb15smizwk",
+      "state": "RegistrationRequested",
+      "agentIdentifier": null,
+      "apiBaseUrl": "http://127.0.0.1:3013",
+      "createdAt": "2026-10-05T14:44:13.817Z",
+      "pricingType": "Dynamic",
+      "httpStatus": 200
+    }
+  },
+  "implementation": {
+    "provenance": "VERIFIED: package.json commands and scripts/paid-worker.mjs, scripts/standard-adapter.mjs, scripts/agent-api.mjs inspected on 2026-10-05. Stub tests do not prove live payment compatibility.",
+    "executionWorker": "implemented and live rehearsal completed",
+    "paidTaskAdapter": "implemented; live seller collection verified",
+    "standardAgentApi": "implemented; paid jobs require confirmed registration and model health"
+  },
+  "tests": {
+    "provenance": "VERIFIED: .local/tests-prepush.log reports tests 87, pass 87, fail 0.",
+    "tests": 87,
+    "pass": 87,
+    "fail": 0,
+    "evidenceFile": ".local/tests-prepush.log"
+  },
+  "corrections": [
+    {
+      "provenance": "VERIFIED: compared earlier setup-state record with current saved output.",
+      "earlier": "Runtime key import and execution rehearsal were pending.",
+      "current": "Runtime import success is reported; saved Task and journal verify completed execution rehearsal."
+    },
+    {
+      "provenance": "VERIFIED: .local/payment-status.json balance.httpStatus 200.",
+      "earlier": "Seller address returned HTTP 404 and balance was not determined.",
+      "current": "2026-10-05T14:43:53.197Z snapshot measures 100000000 lovelace and 100000000 test USDM atomic units. The earlier 404 applied before funding."
+    },
+    {
+      "provenance": "VERIFIED: current source files and registration response inspected.",
+      "earlier": "Standard API, paid adapter, and Masumi registration were incomplete.",
+      "current": "API and adapter are implemented. Registration request returned HTTP 200 with RegistrationRequested; confirmation and settlement remain pending."
+    },
+    {
+      "provenance": "VERIFIED: .local/registration.json and .local/registration-status.json inspected on 2026-10-05.",
+      "earlier": "RegistrationRequested with agentIdentifier null was the current registration checkpoint.",
+      "current": "Registration advanced to RegistrationConfirmed at the same registration ID. The initial request snapshot remains historical evidence; registration does not prove paid settlement."
+    },
+    {
+      "provenance": "VERIFIED: .local/paid-recovery.log, worker journal, and .local/paid-receipt-latest.json inspected.",
+      "earlier": "Payment event failed HTTP 422; runtime receipt blockchainIdentifier was null.",
+      "current": "The same Task has payment-event-saved and a PURCHASED claim with a non-null identifier. onChainState and txHash remain null; settled is false. This is not confirmed escrow funding or seller payment."
+    },
+    {
+      "provenance": "VERIFIED: completed Task, worker journal, Core receipt, and MPS result snapshot inspected.",
+      "earlier": "Purchased claim was pending escrow funding and Task execution.",
+      "current": "Confirmed escrow preceded model execution. The same Task completed with 100 credits and a confirmed matching result submission. Seller collection remains pending; completion and credits are not payment proof."
+    },
+    {
+      "provenance": "VERIFIED: .local/automated-seller-collection-proof.json and D8 regression tests.",
+      "earlier": "Seller collection was pending. The verifier rejected settled=true with withdrawnForSeller=[].",
+      "current": "Core and MPS report the same withdrawal. Blockfrost proves seller net 1000000 test USDM atomic units. Ordinary Withdrawn receipts can omit the dispute payout summary; independent verification remains required."
+    },
+    {
+      "provenance": "VERIFIED: .local/api-deadline-restart-proof.json and D9 regressions.",
+      "earlier": "Expired unpaid quote stopped the API after repeated deadline errors.",
+      "current": "Expired waiting jobs persist failed state for inspection. Checks after asynchronous reads prevent late model execution. Signed response unchanged."
+    }
+  ],
+  "standardApiAvailability": {
+    "provenance": "VERIFIED: curl --fail --silent http://127.0.0.1:3013/availability returned {\"status\":\"available\",\"type\":\"masumi-agent\"} on 2026-10-05 at approximately 14:55 UTC. Availability does not prove a paid Task.",
+    "status": "available",
+    "type": "masumi-agent",
+    "checkedAt": "2026-10-05T14:55:13Z",
+    "timestampLimit": "Timestamp recorded immediately after the request, not supplied by the API."
+  },
+  "paidTask": {
+    "provenance": "VERIFIED: .local/paid-task-created.json and .local/paid-task-after-event.json inspected. Full saved Task event array contains CREATED, READY, RUNNING only; this snapshot does not prove later state.",
+    "taskId": "01a10c8d-085c-767c-810c-e464c8f2a17b",
+    "createdAt": "2026-10-05T14:52:11.740Z",
+    "status": "COMPLETED",
+    "totalCredits": 100,
+    "eventStatuses": [
+      "CREATED",
+      "READY",
+      "RUNNING"
+    ],
+    "corePaymentEventError": {
+      "status": 422,
+      "message": "Only the assigned coworker can set masumiPayment on task events",
+      "timestamp": "2026-10-05T14:53:32.646Z",
+      "provenance": "VERIFIED: .local/paid-event-error.json records HTTP 422 and this exact message."
+    },
+    "receipt": {
+      "provenance": "VERIFIED: .local/automated-seller-collection-proof.json records the Core receipt.",
+      "blockchainIdentifier": "2b3086198039c0d818c00c0230230a9c240cc5a171171c004c0260139cadc005867521b815e998e007658b24e5062ee410053389810d74c20682408e3952706a8382c50248e4c0a0531830e1c012cd0934241ccdc2a60a46820ea46cde2c83710e3c10e1ae4382310d0707391b92120d1631313f2428280893b45c382c980f9a8a310a380238071b1c1b822969401d270a2901bc183d98a98a21b96330240c39040235405324290f64122c19a25860ce1c29071ab53ebbb0a479121b2908ca160f174c1615190617182ee6fc3c1d214b1d30693e9711f410a052291628b10c0db0873a17693f045e2d360130d2c42c1d010302411988447a30970e02c27d404e1b321f8c070315c0b7344d1781c243414828723c4c0ec2c20c01c21a0d188ab382f04647181932012181e0607c8e8a0b8300eb0060517ea0cd6f4a6390fc5850158b0085237d54e41225856d89e05815a02136a6928bc9603878723096e38233e88c8c28684992c7580db49b42898109424229a670482c384d128192419038308b96f140d1a6d802accc29c76ad2383402bd054091133ba0f42a7088806690d14490023c849968e720b0fec505248eb1452bc0e5330f53b78a729439f80190c463c9517ac83e5d0cce6b0632a0967e5581dc09b6dbf0f6d175a71c0c71c0a2e0e776cc4004e007d000bb0800cea794001dc005e17d2cc06f0a600002c00d637e11de003670380002b1bdc80016d88000dc00470410f5822f001cc000f180ef0fd68500208001d4f042202c170800ec0a1bc680428000",
+      "claimStatus": "PURCHASED",
+      "onChainState": "Withdrawn",
+      "settled": true,
+      "txHash": "64a9b1a031d220fb48653171fe8989d722ad25c05c8c5e26287ca15e0fa08bed",
+      "withdrawnForSeller": []
+    },
+    "sellerCollection": {
+      "provenance": "VERIFIED: .local/automated-seller-collection-proof.json. Core and MPS transaction IDs match. Independent Blockfrost UTxOs prove intended seller output minus input test USDM, excluding collateral and reference inputs. This proves this transaction only.",
+      "checkedAt": "2026-10-05T15:53:00.219Z",
+      "txHash": "64a9b1a031d220fb48653171fe8989d722ad25c05c8c5e26287ca15e0fa08bed",
+      "sellerNetUnits": "1000000",
+      "unit": "16a55b2a349361ff88c03788f93e1e966e5d689605d044fef722ddde0014df10745553444d",
+      "confirmations": 39,
+      "sellerAddress": "addr_test1qrdjlmxk80n3hx32dwu2cf298t05vp47t5ekrcdr7ca8ywct5efu6vn2wj78hqepnzj66heq56lyfkmvhjehx43psprqylpzyl"
+    },
+    "recovery": {
+      "stage": "collection-pending",
+      "paymentEventId": "01a10c8f-bd26-726f-931f-966457840191",
+      "provenance": "VERIFIED: .local/paid-recovery.log contains payment-event-saved for this Task; its worker journal records paymentEventId 01a10c8f-bd26-726f-931f-966457840191. Preserve the same Task and signed terms."
+    },
+    "earlierReceipt": {
+      "blockchainIdentifier": null,
+      "provenance": "REPORTED: coordinator observed runtime receipt blockchainIdentifier null; no saved receipt response was available during this documentation update."
+    },
+    "statusEvidenceLimit": "COMPLETED and totalCredits 100 are the inspected completion snapshot; earlier RUNNING/0-credit evidence remains historical.",
+    "previousReceipt": {
+      "provenance": "VERIFIED: .local/paid-receipt-latest.json data fields and meta.timestamp 2026-10-05T14:55:33.376Z. PURCHASED is a payment claim status, not confirmed escrow or seller receipt.",
+      "blockchainIdentifierPresent": true,
+      "claimStatus": "PURCHASED",
+      "onChainState": null,
+      "settled": false,
+      "txHash": null,
+      "withdrawnForSeller": [],
+      "checkedAt": "2026-10-05T14:55:33.376Z"
+    },
+    "completedAt": "2026-10-05T14:58:23.860Z",
+    "completionEventId": "01a10c92-b5ea-76ec-bfa5-6c2efd0f8a16",
+    "sessionId": "wrun_01M4694HQB1X8ZY60EYXMZESTP",
+    "resultFile": ".local/worker/01a10c8d-085c-767c-810c-e464c8f2a17b.result.txt",
+    "resultBytes": 2583,
+    "resultHash": "b3ce2f88b138c260700b2f06939e62318a5840fe20baf4ac18553f67ab1b85c0",
+    "executionEvidence": "VERIFIED: .local/paid-task-completed.json task.status COMPLETED and totalCredits 100. Saved result is 2583 UTF-8 bytes and equals completion event comment. hashPaymentResult(saved result, saved nonce) equals journal resultHash. Task completion and credit debit do not prove seller collection.",
+    "escrowFunding": {
+      "provenance": "VERIFIED: Task journal fundedPayment.onChainState FundsLocked; CurrentTransaction.status Confirmed and confirmations 1. .local/escrow-candidate-utxos.json output 0 carries 1000000 test USDM to the contract. Input hash, seller vkey, and nonce occur as hexadecimal substrings in its datum. These substring checks are not a typed datum parser and do not prove every datum field.",
+      "paymentId": "cmuvdcg190008awvbv5lhqwe9",
+      "onChainState": "FundsLocked",
+      "txHash": "f0882896c4a8a3ea223c0ffd35ea58a3793a9e19e32cb858b9eb16a696cf5664",
+      "confirmations": 1,
+      "amountAtomic": "1000000",
+      "unit": "16a55b2a349361ff88c03788f93e1e966e5d689605d044fef722ddde0014df10745553444d",
+      "inputHash": "41d4e66c2760c8aeb4b7b417553899167ea45409ee7ec44b1fae6f59d80a3770",
+      "identifierFromPurchaser": "57125e6c5a24c5aba1ee"
+    },
+    "resultSubmission": {
+      "provenance": "VERIFIED: .local/paid-mps-latest.json records ResultSubmitted, matching resultHash, and CurrentTransaction Confirmed with 1 confirmation. This transaction submits a result, not seller collection.",
+      "onChainState": "ResultSubmitted",
+      "resultHash": "b3ce2f88b138c260700b2f06939e62318a5840fe20baf4ac18553f67ab1b85c0",
+      "txHash": "e03dd2f38aadc13b0bce51e9ca05e51ce59d4e4c1767cce9219b8acfdca1e91a",
+      "transactionStatus": "Confirmed",
+      "confirmations": 1,
+      "nextAction": "WaitingForExternalAction",
+      "errorType": null
+    },
+    "signedDeadlines": {
+      "provenance": "VERIFIED: existing worker journal plan.unlockTime and plan.externalDisputeUnlockTime. Singapore offsets computed from these UTC timestamps. Unlock does not guarantee immediate V2 collection.",
+      "unlockTime": "2026-10-05T15:28:26.741Z",
+      "unlockSingapore": "2026-10-05T23:28:26.741+08:00",
+      "externalDisputeUnlockTime": "2026-10-05T15:44:26.741Z",
+      "externalDisputeUnlockSingapore": "2026-10-05T23:44:26.741+08:00"
+    },
+    "restart": {
+      "checkedAt": "2026-10-05T14:59:49.225Z",
+      "stoppedPid": 29304,
+      "taskId": "01a10c8d-085c-767c-810c-e464c8f2a17b",
+      "stage": "collection-pending",
+      "sessionId": "wrun_01M4694HQB1X8ZY60EYXMZESTP",
+      "paymentEventId": "01a10c8f-bd26-726f-931f-966457840191",
+      "eventId": "01a10c92-b5ea-76ec-bfa5-6c2efd0f8a16",
+      "resultHash": "b3ce2f88b138c260700b2f06939e62318a5840fe20baf4ac18553f67ab1b85c0",
+      "samePayment": true,
+      "resumedPid": 33125,
+      "verifiedAt": "2026-10-05T15:00:16.260Z",
+      "identifiersUnchanged": true,
+      "provenance": "VERIFIED: .local/receipt-restart-evidence.json records unchanged Task, session, payment event, completion event, and result hash. A process check returned 33125 S node; old PID 29304 was not listed. This verifies saved identifiers and current process state, not every network call."
+    },
+    "journalStage": "completed"
+  },
+  "optionalLaterWork": [
+    "event Workspace approval when ready to share",
+    "hosted deployment for independent later testing"
+  ],
+  "currentPolling": {
+    "provenance": "VERIFIED: .local/task-poll.log reports COMPLETED then idle; .local/user-task-completed.json task.status COMPLETED.",
+    "mode": "execution-only",
+    "taskId": "01a10c8f-46da-712f-ac11-e5fedb2775d3",
+    "eventId": "01a10c99-c846-7008-9f44-58f07ffa7993",
+    "checkedAt": "2026-10-05T16:11:42.658Z",
+    "receiptChecker": "VERIFIED: the earlier checker stopped on an empty Core payout summary. D8 fixed that check. The paid adapter independently verified the same collection.",
+    "commentReplies": "enabled",
+    "logFile": ".local/task-poll-comments.log"
+  },
+  "standardApiContractTest": {
+    "provenance": "VERIFIED: latest status failed after expiration; signed response unchanged, no model session. Availability available. Evidence: .local/api-deadline-restart-proof.json.",
+    "jobId": "5b211d8c-60cc-4ada-ac7a-b945cbf2fe24",
+    "status": "failed",
+    "funded": false,
+    "scope": "Input, quote, and status contract only. No Standard job model execution or settlement was tested.",
+    "correction": "Earlier test supplied unsupported maxEvents. HTTP400 rejected it. Schema-validated limit request succeeded.",
+    "stage": "deadline-expired",
+    "restartEvidenceFile": ".local/api-deadline-restart-proof.json"
+  },
+  "comments": {
+    "status": "completed-live-verified",
+    "provenance": "VERIFIED: one live Coworker reply; same saved session; Task remained COMPLETED; paid artifact hashes unchanged; later poll passes idle.",
+    "mode": "ongoing",
+    "journalDirectory": ".local/comments",
+    "paidResultsUnchanged": true,
+    "uncertainWrites": "inspect before retry",
+    "initialBoundary": "saved initial human comments for new Tasks; completion event for legacy Tasks",
+    "evidenceFile": ".local/comments-live-proof.json",
+    "taskId": "01a10c8f-46da-712f-ac11-e5fedb2775d3",
+    "replyEventId": "01a10cd5-4018-72cf-8ef9-56e8461f29f4",
+    "sessionId": "wrun_01M469K2JMMRWDPKEYVN8DV5XX"
+  }
+}

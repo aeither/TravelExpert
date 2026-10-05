@@ -1,0 +1,337 @@
+{
+  "retrievedAt": "2026-10-05",
+  "coverage": "Curated sample, not exhaustive",
+  "events": [
+    {
+      "id": "defi-institutional",
+      "title": "DeFi’s Institutional Breakthrough",
+      "kind": "conference",
+      "start": "2026-10-07T10:20:00+08:00",
+      "end": "2026-10-07T11:00:00+08:00",
+      "location": "Marina Bay Sands, Singapore; OKX Main Stage",
+      "url": "https://www.token2049.com/singapore/agenda",
+      "topics": [
+        "defi",
+        "institutions"
+      ],
+      "topicProvenance": "INFERRED from title",
+      "admission": {
+        "priceSgd": null,
+        "conferencePassRequired": null,
+        "approvalRequired": null,
+        "badgeRequired": null,
+        "notes": "Conference pass, price, seat availability, separate session approval, and badge requirements are not determined by this agenda snapshot. Check the official ticket and admission information before attendance."
+      },
+      "sourceEvidence": "VERIFIED: official agenda retrieved 2026-10-05, lines 466-481; date heading line 44 identifies Day 1, Wednesday, Oct 7, 2026. Singapore local times normalized to +08:00."
+    },
+    {
+      "id": "crypto-ai-funding",
+      "title": "Crypto x AI: Funding the Next Industrial Revolution",
+      "kind": "conference",
+      "start": "2026-10-07T10:20:00+08:00",
+      "end": "2026-10-07T10:40:00+08:00",
+      "location": "Marina Bay Sands, Singapore; BingX Labs Stage",
+      "url": "https://www.token2049.com/singapore/agenda",
+      "topics": [
+        "ai",
+        "investing"
+      ],
+      "topicProvenance": "INFERRED from title",
+      "admission": {
+        "priceSgd": null,
+        "conferencePassRequired": null,
+        "approvalRequired": null,
+        "badgeRequired": null,
+        "notes": "Conference pass, price, seat availability, separate session approval, and badge requirements are not determined by this agenda snapshot. Check the official ticket and admission information before attendance."
+      },
+      "sourceEvidence": "VERIFIED: official agenda retrieved 2026-10-05, lines 513-527; date heading line 44 identifies Day 1, Wednesday, Oct 7, 2026. Singapore local times normalized to +08:00."
+    },
+    {
+      "id": "ai-agents-blockchain",
+      "title": "AI Agents Trading on the Blockchain",
+      "kind": "conference",
+      "start": "2026-10-07T11:00:00+08:00",
+      "end": "2026-10-07T11:20:00+08:00",
+      "location": "Marina Bay Sands, Singapore; BingX Labs Stage",
+      "url": "https://www.token2049.com/singapore/agenda",
+      "topics": [
+        "ai",
+        "agents",
+        "trading"
+      ],
+      "topicProvenance": "INFERRED from title",
+      "admission": {
+        "priceSgd": null,
+        "conferencePassRequired": null,
+        "approvalRequired": null,
+        "badgeRequired": null,
+        "notes": "Conference pass, price, seat availability, separate session approval, and badge requirements are not determined by this agenda snapshot. Check the official ticket and admission information before attendance."
+      },
+      "sourceEvidence": "VERIFIED: official agenda retrieved 2026-10-05, lines 753-768; date heading line 44 identifies Day 1, Wednesday, Oct 7, 2026. Singapore local times normalized to +08:00."
+    },
+    {
+      "id": "agentic-trading",
+      "title": "Agentic Trading: Will AI Outperform Human Traders?",
+      "kind": "conference",
+      "start": "2026-10-07T11:00:00+08:00",
+      "end": "2026-10-07T11:15:00+08:00",
+      "location": "Marina Bay Sands, Singapore; Bit Digital Stage",
+      "url": "https://www.token2049.com/singapore/agenda",
+      "topics": [
+        "ai",
+        "agents",
+        "trading"
+      ],
+      "topicProvenance": "INFERRED from title",
+      "admission": {
+        "priceSgd": null,
+        "conferencePassRequired": null,
+        "approvalRequired": null,
+        "badgeRequired": null,
+        "notes": "Conference pass, price, seat availability, separate session approval, and badge requirements are not determined by this agenda snapshot. Check the official ticket and admission information before attendance."
+      },
+      "sourceEvidence": "VERIFIED: official agenda retrieved 2026-10-05, lines 780-795; date heading line 44 identifies Day 1, Wednesday, Oct 7, 2026. Singapore local times normalized to +08:00."
+    },
+    {
+      "id": "private-ai-finance",
+      "title": "Making AI and Finance Private by Default",
+      "kind": "conference",
+      "start": "2026-10-07T11:20:00+08:00",
+      "end": "2026-10-07T11:40:00+08:00",
+      "location": "Marina Bay Sands, Singapore; BingX Labs Stage",
+      "url": "https://www.token2049.com/singapore/agenda",
+      "topics": [
+        "ai",
+        "privacy",
+        "finance"
+      ],
+      "topicProvenance": "INFERRED from title",
+      "admission": {
+        "priceSgd": null,
+        "conferencePassRequired": null,
+        "approvalRequired": null,
+        "badgeRequired": null,
+        "notes": "Conference pass, price, seat availability, separate session approval, and badge requirements are not determined by this agenda snapshot. Check the official ticket and admission information before attendance."
+      },
+      "sourceEvidence": "VERIFIED: official agenda retrieved 2026-10-05, lines 905-920; date heading line 44 identifies Day 1, Wednesday, Oct 7, 2026. Singapore local times normalized to +08:00."
+    },
+    {
+      "id": "base-moving-money",
+      "title": "The Base Case for Moving Money Onchain",
+      "kind": "conference",
+      "start": "2026-10-07T11:55:00+08:00",
+      "end": "2026-10-07T12:15:00+08:00",
+      "location": "Marina Bay Sands, Singapore; MEXC Stage",
+      "url": "https://www.token2049.com/singapore/agenda",
+      "topics": [
+        "payments",
+        "onchain"
+      ],
+      "topicProvenance": "INFERRED from title",
+      "admission": {
+        "priceSgd": null,
+        "conferencePassRequired": null,
+        "approvalRequired": null,
+        "badgeRequired": null,
+        "notes": "Conference pass, price, seat availability, separate session approval, and badge requirements are not determined by this agenda snapshot. Check the official ticket and admission information before attendance."
+      },
+      "sourceEvidence": "VERIFIED: official agenda retrieved 2026-10-05, lines 1097-1112; date heading line 44 identifies Day 1, Wednesday, Oct 7, 2026. Singapore local times normalized to +08:00."
+    },
+    {
+      "id": "defi-assets",
+      "title": "DeFi 2.0: Assets Catching up To Primitives",
+      "kind": "conference",
+      "start": "2026-10-07T12:45:00+08:00",
+      "end": "2026-10-07T13:00:00+08:00",
+      "location": "Marina Bay Sands, Singapore; BingX Labs Stage",
+      "url": "https://www.token2049.com/singapore/agenda",
+      "topics": [
+        "defi"
+      ],
+      "topicProvenance": "INFERRED from title",
+      "admission": {
+        "priceSgd": null,
+        "conferencePassRequired": null,
+        "approvalRequired": null,
+        "badgeRequired": null,
+        "notes": "Conference pass, price, seat availability, separate session approval, and badge requirements are not determined by this agenda snapshot. Check the official ticket and admission information before attendance."
+      },
+      "sourceEvidence": "VERIFIED: official agenda retrieved 2026-10-05, lines 1472-1487; date heading line 44 identifies Day 1, Wednesday, Oct 7, 2026. Singapore local times normalized to +08:00."
+    },
+    {
+      "id": "stablecoin-payments",
+      "title": "The Next Era of Stablecoin Payments",
+      "kind": "conference",
+      "start": "2026-10-07T12:50:00+08:00",
+      "end": "2026-10-07T13:05:00+08:00",
+      "location": "Marina Bay Sands, Singapore; OKX Main Stage",
+      "url": "https://www.token2049.com/singapore/agenda",
+      "topics": [
+        "stablecoins",
+        "payments"
+      ],
+      "topicProvenance": "INFERRED from title",
+      "admission": {
+        "priceSgd": null,
+        "conferencePassRequired": null,
+        "approvalRequired": null,
+        "badgeRequired": null,
+        "notes": "Conference pass, price, seat availability, separate session approval, and badge requirements are not determined by this agenda snapshot. Check the official ticket and admission information before attendance."
+      },
+      "sourceEvidence": "VERIFIED: official agenda retrieved 2026-10-05, lines 1499-1514; date heading line 44 identifies Day 1, Wednesday, Oct 7, 2026. Singapore local times normalized to +08:00."
+    },
+    {
+      "id": "web3-ai-action",
+      "title": "Web3 x AI In Action | Token2049 Singapore",
+      "kind": "side-event",
+      "start": "2026-10-06T17:00:00+08:00",
+      "end": "2026-10-06T21:30:00+08:00",
+      "location": "Tahir Building, Level 6, 140 Robinson Road, Singapore 068907",
+      "url": "https://luma.com/rmq4ogij",
+      "topics": [
+        "ai",
+        "agents",
+        "onchain",
+        "finance"
+      ],
+      "topicProvenance": "VERIFIED organizer description",
+      "admission": {
+        "priceSgd": null,
+        "conferencePassRequired": null,
+        "approvalRequired": true,
+        "badgeRequired": null,
+        "notes": "Host approval required. Price and conference pass requirement not determined."
+      },
+      "sourceEvidence": "VERIFIED: organizer page retrieved 2026-10-05, lines 69-84: reception 5:00-5:30PM, final networking 7:30-9:30PM; line 95 identifies October 6; hosts identify 2026 at line 31. Approval lines 35-39; address lines 49 and 114-115. Singapore local times normalized to +08:00."
+    },
+    {
+      "id": "signal-after-dark",
+      "title": "Signal After Dark · AI × Crypto Night",
+      "kind": "side-event",
+      "start": "2026-10-06T19:00:00+08:00",
+      "end": null,
+      "location": "CHIJMES, Singapore; register to see exact location",
+      "url": "https://luma.com/buidl-3t46",
+      "topics": [
+        "ai",
+        "agents",
+        "crypto",
+        "investing",
+        "networking"
+      ],
+      "topicProvenance": "VERIFIED organizer description",
+      "admission": {
+        "priceSgd": 0,
+        "conferencePassRequired": null,
+        "approvalRequired": true,
+        "badgeRequired": true,
+        "notes": "Free entry subject to venue capacity. OpenArena.to QR badge required. Luma RSVP alone does not grant entry. Conference pass requirement not determined. End time unknown; 22:00 is last call, not a confirmed end."
+      },
+      "sourceEvidence": "VERIFIED: organizer page retrieved 2026-10-05, line 57 identifies October 6, BUIDL_QUESTS 2026, and CHIJMES; line 74 states Doors 19:00 and Last call 22:00. Admission lines 46-48 and 76-81. Exact location concealed at lines 83-87. Singapore local time normalized to +08:00."
+    },
+    {
+      "id": "circle-house-07",
+      "title": "Circle House @ TOKEN2049 Singapore 🇸🇬",
+      "kind": "side-event",
+      "start": "2026-10-07T09:30:00+08:00",
+      "end": "2026-10-07T17:00:00+08:00",
+      "location": "Marina Bay Sands, Level 3, Angsana 3A, 10 Bayfront Avenue, Singapore 018956",
+      "url": "https://luma.com/circlehouse2026",
+      "topics": [
+        "stablecoins",
+        "usdc",
+        "arc",
+        "onchain",
+        "finance",
+        "agents"
+      ],
+      "topicProvenance": "VERIFIED organizer description",
+      "admission": {
+        "priceSgd": 0,
+        "conferencePassRequired": false,
+        "approvalRequired": null,
+        "badgeRequired": true,
+        "notes": "Free open house. No TOKEN2049 pass required. Registration required for a single-entry, non-transferable QR ticket. Mandatory security and bag check on Level 1. Detailed session agenda not yet published in source."
+      },
+      "sourceEvidence": "VERIFIED: organizer page retrieved 2026-10-05, line 41 states October 7-8, 2026, daily 9:30 AM to 5:00 PM SGT. Programming lines 45-49; admission lines 54-63; location lines 73-75. SGT normalized to +08:00."
+    },
+    {
+      "id": "circle-house-08",
+      "title": "Circle House @ TOKEN2049 Singapore 🇸🇬",
+      "kind": "side-event",
+      "start": "2026-10-08T09:30:00+08:00",
+      "end": "2026-10-08T17:00:00+08:00",
+      "location": "Marina Bay Sands, Level 3, Angsana 3A, 10 Bayfront Avenue, Singapore 018956",
+      "url": "https://luma.com/circlehouse2026",
+      "topics": [
+        "stablecoins",
+        "usdc",
+        "arc",
+        "onchain",
+        "finance",
+        "agents"
+      ],
+      "topicProvenance": "VERIFIED organizer description",
+      "admission": {
+        "priceSgd": 0,
+        "conferencePassRequired": false,
+        "approvalRequired": null,
+        "badgeRequired": true,
+        "notes": "Free open house. No TOKEN2049 pass required. Registration required for a single-entry, non-transferable QR ticket. Mandatory security and bag check on Level 1. Detailed session agenda not yet published in source."
+      },
+      "sourceEvidence": "VERIFIED: organizer page retrieved 2026-10-05, line 41 states October 7-8, 2026, daily 9:30 AM to 5:00 PM SGT. Programming lines 45-49; admission lines 54-63; location lines 73-75. SGT normalized to +08:00."
+    },
+    {
+      "id": "apac-payments",
+      "title": "The Next Generation of Payments in APAC",
+      "kind": "side-event",
+      "start": "2026-10-08T14:00:00+08:00",
+      "end": "2026-10-08T18:00:00+08:00",
+      "location": "Guoco Midtown Network Hub, Level 2, 126 Beach Road, Singapore 189773",
+      "url": "https://luma.com/jecn61cf",
+      "topics": [
+        "payments",
+        "agents",
+        "stablecoins",
+        "cards",
+        "compliance"
+      ],
+      "topicProvenance": "VERIFIED organizer description",
+      "admission": {
+        "priceSgd": null,
+        "conferencePassRequired": null,
+        "approvalRequired": true,
+        "badgeRequired": null,
+        "notes": "Host approval required. Price, conference pass requirement, and badge requirement not determined."
+      },
+      "sourceEvidence": "VERIFIED: organizer page retrieved 2026-10-05, line 52 states October 8, 2026, 14:00-18:00; approval lines 33-35; topics lines 60-72. Location section identifies 126 Beach Road, Level 2. Singapore local times normalized to +08:00."
+    },
+    {
+      "id": "agentic-finance-summit",
+      "title": "Agentic Finance Summit + The Odds: Prediction Markets Live",
+      "kind": "side-event",
+      "start": "2026-10-08T14:00:00+08:00",
+      "end": "2026-10-08T20:00:00+08:00",
+      "location": "Suntec Singapore Convention & Exhibition Centre, 1 Raffles Boulevard, Singapore 039593",
+      "url": "https://luma.com/8oxs8lco",
+      "topics": [
+        "agents",
+        "ai",
+        "finance",
+        "payments",
+        "stablecoins",
+        "trading",
+        "prediction-markets"
+      ],
+      "topicProvenance": "VERIFIED organizer description",
+      "admission": {
+        "priceSgd": null,
+        "conferencePassRequired": null,
+        "approvalRequired": true,
+        "badgeRequired": null,
+        "notes": "Standard, Speaker, and VIP ticket types require approval. Price, conference pass requirement, and badge requirement not determined."
+      },
+      "sourceEvidence": "VERIFIED: organizer page retrieved 2026-10-05, lines 82-83 state October 8, 2026, 14:00-20:00. Ticket approval lines 50-70; topics lines 194-238; location lines 262-264. Singapore local times normalized to +08:00."
+    }
+  ]
+}

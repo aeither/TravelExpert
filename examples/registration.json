@@ -1,0 +1,32 @@
+{
+  "network": "Preprod",
+  "type": "Standard",
+  "sellingWalletVkey": "db2fecd63be71b9a2a6bb8ac25453adf4606be5d3361e1a3f63a723b",
+  "ExampleOutputs": [],
+  "Tags": [
+    "token2049",
+    "events",
+    "payments"
+  ],
+  "name": "TOKEN2049 Event Guide",
+  "apiBaseUrl": "http://127.0.0.1:3013",
+  "description": "Recommends TOKEN2049 Singapore 2026 events with source links, admission limits, and schedule conflicts.",
+  "Capability": {
+    "name": "event-recommendations",
+    "version": "0.1.0"
+  },
+  "Author": {
+    "name": "Sandro Schaier"
+  },
+  "supportedPaymentSources": [
+    {
+      "chain": "Cardano",
+      "network": "Preprod",
+      "paymentSourceType": "Web3CardanoV2",
+      "address": "addr_test1wzs4e6wc95hkwezlccjw9mdvq0r0rsgx6zk34avptga3ftgn37w4g",
+      "pricing": {
+        "pricingType": "Dynamic"
+      }
+    }
+  ]
+}

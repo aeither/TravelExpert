@@ -1,0 +1,25 @@
+{
+  "name": "token2049-event-guide",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "node --env-file-if-exists=.env.local node_modules/eve/bin/eve.js dev --host 127.0.0.1 --port 2000 --no-ui --no-default-extensions",
+    "test": "node --test tests/*.test.mjs",
+    "recommend": "node scripts/recommend.mjs",
+    "worker": "node scripts/worker.mjs",
+    "payment:setup": "node scripts/payment-setup.mjs",
+    "payment:start": "node scripts/payment-start.mjs",
+    "agent:api": "node scripts/agent-api.mjs",
+    "worker:paid": "node scripts/paid-worker.mjs"
+  },
+  "dependencies": {
+    "@ai-sdk/openai-compatible": "3.0.57",
+    "ai": "7.0.127",
+    "eve": "0.71.0",
+    "zod": "4.6.5"
+  }
+}
