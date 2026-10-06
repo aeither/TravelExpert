@@ -45,3 +45,10 @@ sokosumi --preprod tasks create --personal --coworker-id 01a112c7-de40-761e-80ae
 ```
 
 A task with saved progress that did not finish stops the worker on purpose (`Inspect saved Task`). Inspect the Task and its journal in `/data/worker` before removing anything.
+
+## Flow, chat and follow-ups (2026-10-07)
+
+- **Task:** a trip request gets a free plan and waits (`INPUT_REQUIRED`). Reply "book" (a plain yes or no is decided by code) and the worker opens the checkout through the Expert Travel Advisor `POST /hotels/book` first. Only if one opens does it request a fee of about 2% of the hotel total (0.5 to 5 test USDM, so the credits shown vary), with a varied message that starts "Payment requested: X test USDM." After escrow and the result hash are confirmed it hands over the checkout link with cexplorer links for both transactions, and later posts the payout transaction as a comment. Code: `scripts/travel-worker.mjs`, `scripts/booking-copy.mjs`, `scripts/advisor.mjs`.
+- **Chat:** the Coworker has the `chat` capability and base URL `https://travel-expert-production.up.railway.app/v1`. Sokosumi routes chat to an OpenAI Responses-compatible interface; `POST /v1/responses` (also streaming) and `GET /v1/models` are served by `scripts/chat.mjs`. Chat is free and cannot book. The exact path Sokosumi calls is not documented, so it still needs one check from the Sokosumi chat UI.
+- **Follow-ups:** a user comment on a finished task (within two days) gets one free reply as a comment, no status change. Tested with mocks only.
+- Verified: task `01a112df-1ef6-755e-90e2-1e04a310cd30` ran plan, "book", a 2.2 test USDM fee, escrow and result-hash transactions, and a hotels.com checkout link.

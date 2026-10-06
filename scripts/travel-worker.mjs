@@ -112,7 +112,7 @@ export function createTravelWorker({ api, mps, eve, advisor, store, source, cowo
       if (!(confirmed(now, 'ResultSubmitted') && now.resultHash === paid.resultHash)) return 'waiting';
       paid.resultTx = now.CurrentTransaction.txHash; paid.stage = 'result-confirmed'; await save();
     }
-    return finish(task, st, save, st.answer + proofBlock(paid, source, st.fee));
+    return finish(task, st, save, st.answer + '\n' + proofBlock(paid, source, st.fee));
   }
 
   async function advance(task) {
