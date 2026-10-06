@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
-import { Client } from 'eve/client';
+import { createEveClient } from './eve-client.mjs';
 import { repo, privateDir, readEnv } from './payment-config.mjs';
 import { createStore, safeId } from './worker-state.mjs';
 import { runOnce, cliRuntime, WORKER_DIRECTORY } from './worker.mjs';
@@ -10,9 +10,11 @@ import { createPaymentPlan, createMpsClient } from './payment.ts';
 import { createCoreRuntime } from './core-runtime.mjs';
 import { COMMENT_DIRECTORY } from './task-comments.mjs';
 import { createPaidAdapter, resumeReceipt } from './paid-adapter.mjs';
+import { isHosted, hostedPaidConfiguration, hostedRuntime } from './hosted.mjs';
 
 const POLL_DELAY_MS = 10_000;
 export async function loadPaidConfiguration() {
+  if (isHosted()) return hostedPaidConfiguration();
   const setup = JSON.parse(await readFile(resolve(repo, 'docs/setup-state.json'), 'utf8'));
   const registration = JSON.parse(await readFile(resolve(privateDir, 'registration.json'), 'utf8'));
   if (registration.status !== 'RegistrationConfirmed' || !Number.isInteger(registration.supportedPaymentSourceIndex) ||
@@ -40,12 +42,14 @@ async function main() {
   const stop = new AbortController();
   process.once('SIGINT', () => stop.abort());
   process.once('SIGTERM', () => stop.abort());
-  const core = await createCoreRuntime(config.coworkerId, config.userId);
+  const hosted = isHosted() ? hostedRuntime() : null;
+  const core = await createCoreRuntime(config.coworkerId, config.userId, hosted ? { loadRuntime: hosted.loadRuntime } : undefined);
   const dependencies = {
     commentStore: await createStore(COMMENT_DIRECTORY), core,
-    coworkerId: config.coworkerId, store: await createStore(WORKER_DIRECTORY), runtime: cliRuntime(config.coworkerId),
-    eve: new Client({ host: 'http://127.0.0.1:2000', redirect: 'error' }),
+    coworkerId: config.coworkerId, store: await createStore(WORKER_DIRECTORY), runtime: hosted ? hosted.runtime : cliRuntime(config.coworkerId),
+    eve: createEveClient(),
     payments: createPaidAdapter({ ...config, core, signal: stop.signal }),
+    backgroundSettlement: !!hosted,
   };
   if (receipt) {
     const release = await dependencies.store.lock(config.coworkerId);

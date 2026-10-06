@@ -29,24 +29,29 @@ export function createPaidAdapter({ source, mps, core, blockfrostKey, verify = v
       state.resultHash = result.resultHash;
       await save('result-hash-submitted');
     },
-    async settle(state, save) {
+    // One non-blocking check. Returns the proof once the seller payout is collected and verified on-chain, otherwise null.
+    async settleOnce(state, save) {
       validatePlan(state.plan);
       validateQuote(state.plan, state.quote);
-      await save('collection-pending');
-      const stopAt = Date.parse(state.plan.externalDisputeUnlockTime) + COLLECTION_GRACE_MS;
+      if (state.stage !== 'collection-pending') await save('collection-pending');
+      const receipt = await fetchCoreReceipt(core, state.taskId, signal);
+      const payment = await readSellerCollection(mps, state.plan, state.quote, signal);
+      if (receipt.blockchainIdentifier && receipt.blockchainIdentifier !== state.quote.blockchainIdentifier) {
+        throw new Error('Core receipt belongs to another payment.');
+      }
+      if (receipt.settled && receipt.txHash && payment.settled && payment.txHash === receipt.txHash) {
+        if (receipt.blockchainIdentifier !== state.quote.blockchainIdentifier) throw new Error('Receipt has no matching payment identifier.');
+        return { receipt, proof: await verify(receipt.txHash, state.plan, blockfrostKey, signal) };
+      }
+      return null;
+    },
+    pastCollectionWindow: state => Date.now() >= Date.parse(state.plan.externalDisputeUnlockTime) + COLLECTION_GRACE_MS,
+    async settle(state, save) {
       while (true) {
         signal?.throwIfAborted();
-        const receipt = await fetchCoreReceipt(core, state.taskId, signal);
-        const payment = await readSellerCollection(mps, state.plan, state.quote, signal);
-        if (receipt.blockchainIdentifier && receipt.blockchainIdentifier !== state.quote.blockchainIdentifier) {
-          throw new Error('Core receipt belongs to another payment.');
-        }
-        if (receipt.settled && receipt.txHash && payment.settled && payment.txHash === receipt.txHash) {
-          if (receipt.blockchainIdentifier !== state.quote.blockchainIdentifier) throw new Error('Receipt has no matching payment identifier.');
-          const proof = await verify(receipt.txHash, state.plan, blockfrostKey, signal);
-          return { receipt, proof };
-        }
-        if (Date.now() >= stopAt) break;
+        const proof = await this.settleOnce(state, save);
+        if (proof) return proof;
+        if (this.pastCollectionWindow(state)) break;
         await pause(RECEIPT_POLL_MS, undefined, { signal });
       }
       throw new Error('Seller collection is pending. Resume receipt verification for the same Task.');

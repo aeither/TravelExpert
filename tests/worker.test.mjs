@@ -59,7 +59,7 @@ test('sends authoritative started Task input rather than stale list input', asyn
     send: async input => { sent = input; return { result: async () => ({ status: 'waiting', message: 'Result' }) }; },
   } });
   await runOnce(dependencies);
-  assert.equal(sent, 'NEW input');
+  assert.match(sent, /^Today is \d{4}-\d{2}-\d{2}\.\nTraveller request: "NEW input"$/);
 });
 
 for (const [failure, stage] of [['start', 'start-pending'], ['create', 'session-create-pending'], ['send', 'send-pending'], ['result', 'model-running'], ['complete', 'complete-pending']]) {
@@ -211,4 +211,40 @@ test('D13: session creation crossing paid result deadline cannot send a model tu
     await assert.rejects(runOnce(dependencies), /Inspect saved Task/);
     assert.ok(!calls.includes('send'));
   } finally { Date.now = original; }
+});
+
+test('background settlement completes the Task without waiting, then settles on a later poll', async t => {
+  const { dependencies, calls } = await fixture(t);
+  dependencies.backgroundSettlement = true;
+  let collected = false;
+  dependencies.payments = {
+    request: async (_task, state) => { state.plan = { submitResultTime: new Date(Date.now() + 60_000).toISOString() }; },
+    submit: async () => {},
+    settle: async () => { throw new Error('must not block'); },
+    settleOnce: async (state, save) => { calls.push('settle-once'); if (state.stage !== 'collection-pending') await save('collection-pending'); return collected ? { txHash: 'verified-later' } : null; },
+    pastCollectionWindow: () => false,
+  };
+  const first = await runOnce(dependencies);
+  assert.equal(first.settlement, 'pending');
+  assert.equal((await dependencies.store.read(task.id)).stage, 'task-completed');
+  await runOnce(dependencies);
+  assert.equal((await dependencies.store.read(task.id)).stage, 'collection-pending');
+  collected = true;
+  await runOnce(dependencies);
+  const saved = await dependencies.store.read(task.id);
+  assert.equal(saved.stage, 'completed');
+  assert.deepEqual(saved.paymentProof, { txHash: 'verified-later' });
+});
+
+test('background settlement flags a Task whose collection window closed', async t => {
+  const { dependencies } = await fixture(t);
+  dependencies.backgroundSettlement = true;
+  dependencies.payments = {
+    request: async (_task, state) => { state.plan = { submitResultTime: new Date(Date.now() + 60_000).toISOString() }; },
+    submit: async () => {}, settleOnce: async () => null, pastCollectionWindow: () => true,
+  };
+  await runOnce(dependencies);
+  // The fake list keeps returning the Task; in Sokosumi a completed Task is no longer READY.
+  await assert.rejects(runOnce(dependencies), /saved progress/);
+  assert.equal((await dependencies.store.read(task.id)).inspectionRequired, true);
 });

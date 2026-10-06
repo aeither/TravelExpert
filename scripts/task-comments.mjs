@@ -1,7 +1,7 @@
 import { resolve } from 'node:path';
 import { safeId } from './worker-state.mjs';
 
-export const COMMENT_DIRECTORY = resolve(import.meta.dirname, '../.local/comments');
+export const COMMENT_DIRECTORY = resolve(process.env.DATA_DIR || resolve(import.meta.dirname, '../.local'), 'comments');
 const TEXT_LIMIT = 1_048_576;
 
 export function humanComments(events) {

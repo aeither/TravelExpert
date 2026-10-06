@@ -7,8 +7,10 @@ import { Client } from 'eve/client';
 import { createStore, safeId } from './worker-state.mjs';
 import { COMMENT_DIRECTORY, humanComments, processComments } from './task-comments.mjs';
 import { createCoreRuntime } from './core-runtime.mjs';
+import { travelPrompt } from './agent-api.mjs';
 
-export const WORKER_DIRECTORY = resolve(import.meta.dirname, '../.local/worker');
+export const DATA_DIRECTORY = resolve(process.env.DATA_DIR || resolve(import.meta.dirname, '../.local'));
+export const WORKER_DIRECTORY = resolve(DATA_DIRECTORY, 'worker');
 
 const execute = promisify(execFile);
 const RESULT_LIMIT = 1_048_576;
@@ -32,7 +34,7 @@ export function hasPayment(value) {
     (typeof item === 'object' && hasPayment(item)));
 }
 
-export async function processTask(task, { coworkerId, store, runtime, eve, payments }) {
+export async function processTask(task, { coworkerId, store, runtime, eve, payments, backgroundSettlement = false }) {
   validateTask(task, coworkerId);
   const previous = await store.read(task.id);
   if (previous?.stage === 'completed') return { taskId: task.id, status: 'skipped' };
@@ -64,7 +66,7 @@ export async function processTask(task, { coworkerId, store, runtime, eve, payme
     const { session } = await eve.sessions.create();
     state.sessionId = safeId(session.state.sessionId);
     await save('send-pending');
-    const input = comments.length ? `${started.description}\n\nExisting human Task comments:\n${JSON.stringify(comments.map(event => ({ commentId: event.id, comment: event.comment })))}` : started.description;
+    const input = travelPrompt(comments.length ? `${started.description}\n\nExisting human Task comments:\n${JSON.stringify(comments.map(event => ({ commentId: event.id, comment: event.comment })))}` : started.description);
     requirePaidDeadline();
     const response = await session.send(input);
     await save('model-running');
@@ -79,12 +81,14 @@ export async function processTask(task, { coworkerId, store, runtime, eve, payme
     await save('result-saved');
     if (payments) await payments.submit(state, result.message, save);
     await save('complete-pending');
-    const completed = await runtime.complete(task.id, state.resultFile);
+    const completed = await runtime.complete(task.id, state.resultFile, result.message);
     if (completed.status !== 'COMPLETED' || completed.taskId !== task.id || !completed.eventId) {
       throw new Error('Task completion was not confirmed.');
     }
     state.eventId = safeId(completed.eventId);
     await save('task-completed');
+    // Hosted: do not hold the worker for the ~50 minute escrow window. settleDue() collects the proof on later polls.
+    if (payments && backgroundSettlement) return { taskId: task.id, status: 'COMPLETED', eventId: state.eventId, executionOnly: false, settlement: 'pending' };
     if (payments) state.paymentProof = await payments.settle(state, save);
     await save('completed');
     return { taskId: task.id, status: 'COMPLETED', eventId: state.eventId, executionOnly: !payments };
@@ -96,14 +100,37 @@ export async function processTask(task, { coworkerId, store, runtime, eve, payme
   }
 }
 
+// Checks every completed paid Task once. A proof moves it to 'completed'; a closed collection window flags it for inspection.
+export async function settleDue({ store, payments, coworkerId }) {
+  const results = [];
+  for (const id of await store.ids()) {
+    const state = await store.read(id);
+    if (!state || state.coworkerId !== coworkerId || state.executionOnly || state.inspectionRequired || !state.eventId ||
+        !['task-completed', 'collection-pending'].includes(state.stage)) continue;
+    const save = async stage => { state.stage = stage; await store.save(state); };
+    try {
+      const proof = await payments.settleOnce(state, save);
+      if (proof) { state.paymentProof = proof; await save('completed'); results.push({ taskId: id, status: 'settled' }); }
+      else if (payments.pastCollectionWindow(state)) { state.inspectionRequired = true; await store.save(state); results.push({ taskId: id, status: 'settlement-inspection-required' }); }
+    } catch { results.push({ taskId: id, status: 'settlement-check-failed' }); }
+  }
+  return results;
+}
+
 export async function runOnce(dependencies) {
   const release = await dependencies.store.lock(dependencies.coworkerId);
   try {
+    if (dependencies.backgroundSettlement && dependencies.payments) {
+      const settled = await settleDue(dependencies);
+      for (const item of settled) console.log(JSON.stringify(item));
+    }
     const comments = dependencies.commentStore ? await processComments(dependencies) : null;
     const tasks = await dependencies.runtime.list();
     for (const task of tasks) {
       const saved = await dependencies.store.read(task.id);
       if (saved?.stage === 'completed') continue;
+      // Completed in Sokosumi, payout still being collected in the background: nothing to execute.
+      if (dependencies.backgroundSettlement && saved?.eventId && !saved.inspectionRequired && ['task-completed', 'collection-pending'].includes(saved.stage)) continue;
       const result = await processTask(task, dependencies);
       return comments && comments.status !== 'idle' ? { ...result, comments } : result;
     }
