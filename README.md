@@ -56,7 +56,7 @@ sequenceDiagram
   O-->>T: Running, then Completed with the answer
 ```
 
-What is not connected yet: the orchestrator calls the knowledge desk with the internal API key, not with a paid Masumi escrow (that needs a funded purchasing wallet on `mps`), and the newer advisor at `expert-travel-advisor-eve.vercel.app` needs credentials before it can replace `expert-travel-advisor.vercel.app`.
+What is not connected yet: the orchestrator calls the knowledge desk with the internal API key, not with a paid Masumi escrow (that needs a funded purchasing wallet on `mps`), and the advisor at `expert-travel-advisor-eve.vercel.app` (now the worker's default `ADVISOR_URL`) serves MIP-003 routes but completes jobs without payment terms, so it cannot be bought from with Masumi yet.
 
 | Piece | Where |
 | --- | --- |

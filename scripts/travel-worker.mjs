@@ -273,7 +273,7 @@ async function main() {
   const config = hostedPaidConfiguration();
   const dataDir = resolve(process.env.DATA_DIR || resolve(import.meta.dirname, '../.local'));
   const worker = createTravelWorker({
-    api: createHttpClient(process.env.SOKOSUMI_COWORKER_API_KEY), mps: config.mps, eve: createEveClient(), advisor: createAdvisor(process.env.ADVISOR_URL || 'https://expert-travel-advisor.vercel.app'),
+    api: createHttpClient(process.env.SOKOSUMI_COWORKER_API_KEY), mps: config.mps, eve: createEveClient(), advisor: createAdvisor(process.env.ADVISOR_URL || 'https://expert-travel-advisor-eve.vercel.app'),
     store: await createStore(resolve(dataDir, 'travel')), source: config.source, coworkerId: config.coworkerId, dataDir,
   });
   const stop = new AbortController();
