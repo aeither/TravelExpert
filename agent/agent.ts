@@ -1,4 +1,5 @@
 import { defineAgent } from 'eve';
-import { zai } from './lib/models.mjs';
+import { openrouter, MODEL_ID } from './lib/models.mjs';
 
-export default defineAgent({ model: zai('glm-5.3-flash'), defaultTools: false });
+// openrouter/free routes to a free model per request, so no catalog lists its context window; 128k is the common floor.
+export default defineAgent({ model: openrouter(MODEL_ID()), modelContextWindowTokens: 128_000, defaultTools: false });
