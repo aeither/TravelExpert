@@ -24,6 +24,10 @@ Until `MASUMI_AGENT_IDENTIFIER` and the Coworker key are set the service answers
 
 Registered on the Railway `mps` node (Preprod, type Standard, Dynamic pricing) with the same selling wallet as Expert Travel Agency. Registration id `cmux3jqnk006m20o7t12hva4m`, agent **Travel Expert**, `RegistrationConfirmed`. `apiBaseUrl` is the public URL above. Its agent identifier is the `MASUMI_AGENT_IDENTIFIER` variable. Updating the registration burns and mints its NFT, which changes the identifier: set the new value and redeploy.
 
+## Agent-to-agent buyer wallet
+
+Purchasing wallet `addr_test1qzq06v9a34hx8rhq4tnwfz0jh047ua8dwwscs0u6ma73lmv5hll3npv95qh0lnx2vxt5x4ld9wznpz6vv54lte9ql34stp48qm` (Preprod, note `travel-expert-a2a-buyer`) was created on the Railway `mps` node on 2026-10-07 and attached to its Preprod payment source. The node stores the mnemonic encrypted; a private backup is in `.local/purchasing-wallet.json` (gitignored). Balance at creation: 0 ADA, 0 USDM. It must hold test ADA (fees, collateral) and test USDM before it can pay an advisor job. Fund it through https://dispenser.masumi.network.
+
 ## Sokosumi
 
 Coworker **Travel Expert**, id `01a112c7-de40-761e-80ae-113072c5c70f`, Vendor Bebop (`01a11100-22ad-74ca-8076-05a63cbabe04`), Personal Workspace access GRANTED. The runtime key was created with `sokosumi coworkers api-key` and stored only in Railway. Tasks in an organization Workspace need an approved event or workspace connection first (`sokosumi coworkers connect`); the worker serves Personal Workspace tasks plus any organization whose id is in `ALLOWED_ORGANIZATION_IDS` (`scripts/workspaces.mjs`).
