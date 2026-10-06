@@ -6,10 +6,10 @@ import { pathToFileURL } from 'node:url';
 import { z } from 'zod';
 import { existsSync } from 'node:fs';
 import { setTimeout as delay } from 'node:timers/promises';
-import { Client } from 'eve/client';
-import { recommendationInput } from '../src/recommendations.mjs';
+import { createEveClient } from './eve-client.mjs';
+import { createChat, streamEvents } from './chat.mjs';
 
-export const API_DIRECTORY = resolve(import.meta.dirname, '../.local/agent-api');
+export const API_DIRECTORY = resolve(process.env.DATA_DIR || resolve(import.meta.dirname, '../.local'), 'agent-api');
 const BODY_LIMIT = 65_536;
 const RESULT_LIMIT = 1_048_576;
 const idSchema = z.string().uuid();
@@ -32,8 +32,8 @@ const quoteSchema = z.object({
 }).strict();
 
 export const inputSchema = {
-  input_data: [{ id: 'request', type: 'string', name: 'Event guide request',
-    data: { description: 'JSON recommendation parameters. Example: {"interests":["payments"],"dates":["2026-10-08"]}. Dates use Singapore time.' },
+  input_data: [{ id: 'request', type: 'string', name: 'Trip request',
+    data: { description: 'A plain-language trip request. Example: "Plan 3 days in Cebu from 9 November for 2 people". The destination and arrival date are required.' },
     validations: [{ validation: 'min', value: '1' }, { validation: 'max', value: String(BODY_LIMIT) }] }],
 };
 
@@ -44,7 +44,8 @@ function apiError(statusCode, message) {
 export function parseStart(body) {
   try {
     const parsed = startSchema.parse(body);
-    const request = recommendationInput.parse(JSON.parse(parsed.input_data.request));
+    const request = parsed.input_data.request.trim();
+    if (!request) throw new Error('Empty request.');
     return { body: parsed, request };
   } catch { throw apiError(400, 'Invalid input_data.request or identifier_from_purchaser (14 to 26 lowercase hexadecimal characters required).'); }
 }
@@ -207,17 +208,29 @@ async function readBody(request) {
   catch { throw apiError(400, 'Request body must be JSON.'); }
 }
 
-export function createAgentServer(manager) {
+// Loopback is always allowed. A hosted deployment lists its public hostnames in ALLOWED_HOSTS (comma separated).
+export const allowedHosts = (env = process.env) => new Set(['127.0.0.1', 'localhost', '[::1]', ...(env.ALLOWED_HOSTS ?? '').split(',').map(host => host.trim().toLowerCase()).filter(Boolean)]);
+
+export function createAgentServer(manager, hosts = allowedHosts(), chat) {
   return createServer(async (request, response) => {
     const send = (code, value) => { response.writeHead(code, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' }); response.end(JSON.stringify(value)); };
     try {
       const host = new URL(`http://${request.headers.host}`);
-      if (!['127.0.0.1', 'localhost', '[::1]'].includes(host.hostname)) throw apiError(403, 'Loopback Host required.');
+      if (!hosts.has(host.hostname)) throw apiError(403, 'Host is not allowed.');
       if (request.headers.origin) {
         const origin = new URL(request.headers.origin);
-        if (!['127.0.0.1', 'localhost', '[::1]'].includes(origin.hostname)) throw apiError(403, 'Remote browser origins are not accepted.');
+        if (!hosts.has(origin.hostname)) throw apiError(403, 'Remote browser origins are not accepted.');
       }
       const url = new URL(request.url, 'http://127.0.0.1');
+      // Sokosumi chat: an OpenAI Responses-compatible path. Register this server's /v1 as the Coworker's baseURL.
+      if (chat && request.method === 'GET' && url.pathname === '/v1/models') return send(200, chat.models());
+      if (chat && request.method === 'POST' && url.pathname === '/v1/responses') {
+        const body = await readBody(request), reply = await chat.respond(body);
+        if (body.stream !== true) return send(200, reply);
+        response.writeHead(200, { 'content-type': 'text/event-stream; charset=utf-8', 'cache-control': 'no-store', connection: 'keep-alive' });
+        for (const { type, data } of chat.stream(reply)) response.write(`event: ${type}\ndata: ${JSON.stringify(data)}\n\n`);
+        return response.end();
+      }
       if (request.method === 'GET' && url.pathname === '/input_schema') return send(200, inputSchema);
       if (request.method === 'GET' && url.pathname === '/availability') {
         const available = await manager.availability();
@@ -230,11 +243,14 @@ export function createAgentServer(manager) {
   });
 }
 
+// The traveller's words are data. The date is ours, so "tomorrow" and missing years resolve correctly.
+export const travelPrompt = (request, now = new Date()) => `Today is ${now.toISOString().slice(0, 10)}.\nTraveller request: ${JSON.stringify(request)}`;
+
 export function eveJobRunner(eve) {
   return async (request, _job, persistSession) => {
     const { session } = await eve.sessions.create();
     await persistSession(session.state.sessionId);
-    const response = await session.send(`Recommend TOKEN2049 events using these exact parameters: ${JSON.stringify(request)}`);
+    const response = await session.send(travelPrompt(request));
     const result = await response.result();
     if (!['waiting', 'completed'].includes(result.status) || result.inputRequests?.length ||
       result.events?.some(event => ['authorization.required', 'turn.failed'].includes(event.type))) {
@@ -246,11 +262,13 @@ export function eveJobRunner(eve) {
 
 async function main() {
   let dependencies = {};
-  if (existsSync(resolve(import.meta.dirname, '../.local/registration.json'))) {
+  const { isHosted } = await import('./hosted.mjs');
+  // Without a confirmed registration there are no dependencies, so /availability reports unavailable and /start_job refuses.
+  if (isHosted() || existsSync(resolve(import.meta.dirname, '../.local/registration.json'))) {
     const { loadPaidConfiguration } = await import('./paid-worker.mjs');
     const { createStandardAdapter } = await import('./standard-adapter.mjs');
     const config = await loadPaidConfiguration();
-    dependencies = createStandardAdapter({ ...config, eve: new Client({ host: 'http://127.0.0.1:2000', redirect: 'error' }) });
+    dependencies = createStandardAdapter({ ...config, eve: createEveClient() });
   }
   const manager = await createJobManager({ dependencies });
   const stop = new AbortController();
@@ -272,11 +290,20 @@ async function main() {
       catch { break; }
     }
   };
-  const server = createAgentServer(manager);
+  const eve = createEveClient();
+  const chat = createChat({ turn: async prompt => {
+    const { session } = await eve.sessions.create();
+    const result = await (await session.send(prompt)).result();
+    if (!['waiting', 'completed'].includes(result.status) || result.inputRequests?.length || !result.message?.trim()) throw new Error('No answer.');
+    return result.message.trim();
+  } });
+  chat.stream = streamEvents;
+  const server = createAgentServer(manager, allowedHosts(), chat);
   void advance();
-  server.listen(3013, '127.0.0.1', () => console.log('Standard agent API listening at http://127.0.0.1:3013 (registration gates paid jobs).'));
+  const port = Number(process.env.PORT || 3013), bind = process.env.HOST || '127.0.0.1';
+  server.listen(port, bind, () => console.log(`Standard agent API listening on ${bind}:${port} (registration gates paid jobs).`));
   for (const signal of ['SIGINT', 'SIGTERM']) process.once(signal, () => { stop.abort(); server.close(async () => { await manager.close(); process.exit(0); }); });
-  server.on('error', async () => { stop.abort(); await manager.close(); console.error('Agent API could not listen on loopback port 3013.'); process.exitCode = 1; });
+  server.on('error', async () => { stop.abort(); await manager.close(); console.error('Agent API could not listen on its port.'); process.exitCode = 1; });
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
