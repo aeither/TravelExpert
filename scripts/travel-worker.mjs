@@ -10,6 +10,7 @@ import { hostedPaidConfiguration } from './hosted.mjs';
 import { createAdvisor } from './advisor.mjs';
 import { travelPrompt } from './agent-api.mjs';
 import { txUrl, CLOSING, NOT_OPENED, answerToOffer, collectionComment, feeFor, handoverText, paymentComment, proofBlock } from './booking-copy.mjs';
+import { inAllowedWorkspace } from './workspaces.mjs';
 
 const POLL_MS = 10_000;
 const COLLECT_GRACE_MS = 30 * 60_000;
@@ -255,7 +256,7 @@ export function createTravelWorker({ api, mps, eve, advisor, store, source, cowo
       for (const status of ['READY', 'RUNNING', 'INPUT_REQUIRED']) {
         const page = await api.get(`/v1/tasks?${new URLSearchParams({ coworkerId, status, limit: '100' })}`);
         for (const task of page.data ?? []) {
-          if (seen.has(task.id) || (task.assigneeId ?? task.coworkerId) !== coworkerId || task.organizationId !== null) continue;
+          if (seen.has(task.id) || (task.assigneeId ?? task.coworkerId) !== coworkerId || !inAllowedWorkspace(task)) continue;
           seen.add(task.id);
           const st = await store.read(task.id);
           if (st?.inspectionRequired) continue;

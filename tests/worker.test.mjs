@@ -248,3 +248,10 @@ test('background settlement flags a Task whose collection window closed', async 
   await assert.rejects(runOnce(dependencies), /saved progress/);
   assert.equal((await dependencies.store.read(task.id)).inspectionRequired, true);
 });
+
+test('organization tasks are accepted only when allow-listed', async () => {
+  const { inAllowedWorkspace } = await import('../scripts/workspaces.mjs');
+  assert.equal(inAllowedWorkspace({ organizationId: null }, new Set()), true);
+  assert.equal(inAllowedWorkspace({ organizationId: 'org_a' }, new Set()), false);
+  assert.equal(inAllowedWorkspace({ organizationId: 'org_a' }, new Set(['org_a'])), true);
+});

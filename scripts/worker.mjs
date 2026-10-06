@@ -12,6 +12,8 @@ import { travelPrompt } from './agent-api.mjs';
 export const DATA_DIRECTORY = resolve(process.env.DATA_DIR || resolve(import.meta.dirname, '../.local'));
 export const WORKER_DIRECTORY = resolve(DATA_DIRECTORY, 'worker');
 
+import { inAllowedWorkspace } from './workspaces.mjs';
+
 const execute = promisify(execFile);
 const RESULT_LIMIT = 1_048_576;
 const POLL_DELAY_MS = 10_000;
@@ -19,10 +21,10 @@ const CLI_TIMEOUT_MS = 900_000;
 
 export function validateTask(task, coworkerId, status = 'READY') {
   safeId(task?.id);
-  if (task.status !== status || task.organizationId !== null ||
+  if (task.status !== status || !inAllowedWorkspace(task) ||
       (task.assigneeId ?? task.coworkerId) !== coworkerId ||
       typeof task.description !== 'string' || !task.description.trim()) {
-    throw new Error('Task identity, personal Workspace, status, or input does not match.');
+    throw new Error('Task identity, Workspace, status, or input does not match.');
   }
 }
 

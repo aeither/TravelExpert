@@ -1,5 +1,6 @@
 import { resolve } from 'node:path';
 import { safeId } from './worker-state.mjs';
+import { inAllowedWorkspace } from './workspaces.mjs';
 
 export const COMMENT_DIRECTORY = resolve(process.env.DATA_DIR || resolve(import.meta.dirname, '../.local'), 'comments');
 const TEXT_LIMIT = 1_048_576;
@@ -10,7 +11,7 @@ export function humanComments(events) {
 }
 
 function validateAssignedTask(task, taskId, coworkerId) {
-  if (task?.id !== taskId || task.status !== 'COMPLETED' || task.organizationId !== null ||
+  if (task?.id !== taskId || task.status !== 'COMPLETED' || !inAllowedWorkspace(task) ||
       (task.assigneeId ?? task.coworkerId) !== coworkerId) {
     throw new Error('Comment Task is no longer completed and assigned in the Personal Workspace.');
   }

@@ -3,6 +3,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { createPaymentPlan, createSignedQuote, buildMasumiPaymentEvent, waitForFundsLocked,
   submitSellerResult, fetchCoreReceipt, validatePlan, validateQuote, readSellerCollection } from './payment.ts';
 import { verifySellerPayment } from './chain.ts';
+import { inAllowedWorkspace } from './workspaces.mjs';
 
 const RECEIPT_POLL_MS = 10_000;
 const COLLECTION_GRACE_MS = 30 * 60_000;
@@ -66,7 +67,7 @@ export async function resumeReceipt(taskId, { store, payments, runtime, coworker
     throw new Error('Receipt verification requires a completed paid Task journal.');
   }
   const detail = await runtime.inspect(taskId);
-  if (detail.task.id !== taskId || detail.task.status !== 'COMPLETED' || detail.task.organizationId !== null ||
+  if (detail.task.id !== taskId || detail.task.status !== 'COMPLETED' || !inAllowedWorkspace(detail.task) ||
       (detail.task.assigneeId ?? detail.task.coworkerId) !== coworkerId) throw new Error('Completed Task identity differs from the journal.');
   const text = await readFile(state.resultFile, 'utf8');
   const { hashPaymentResult } = await import('./payment.ts');
