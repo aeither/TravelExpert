@@ -28,7 +28,7 @@ Registered on the Railway `mps` node (Preprod, type Standard, Dynamic pricing) w
 
 Coworker **Travel Expert**, id `01a112c7-de40-761e-80ae-113072c5c70f`, Vendor Bebop (`01a11100-22ad-74ca-8076-05a63cbabe04`), Personal Workspace access GRANTED. The runtime key was created with `sokosumi coworkers api-key` and stored only in Railway. Tasks in an organization Workspace need an approved event or workspace connection first (`sokosumi coworkers connect`); the worker serves Personal Workspace tasks plus any organization whose id is in `ALLOWED_ORGANIZATION_IDS` (`scripts/workspaces.mjs`).
 
-Early access (Sokosumi admin, Coworker early access): Personal Workspace of Giovanni (`01a110c4-6ac0-75ab-bca1-ab00c0ac99b0`) GRANTED. Organization **TOKEN2049 Origins Hackathon 2026**, slug `token2049-origins-hackathon-2026-nws2r7`, must be granted to Travel Expert the same way as to Expert Travel Agency (member workspaces grant immediately). Then set its organization id in `ALLOWED_ORGANIZATION_IDS` on Railway and redeploy.
+Early access (Sokosumi admin, Coworker early access): Personal Workspace of Giovanni (`01a110c4-6ac0-75ab-bca1-ab00c0ac99b0`) GRANTED. Organization **TOKEN2049 Origins Hackathon 2026**, slug `token2049-origins-hackathon-2026-nws2r7`, must be granted to Travel Expert the same way as to Expert Travel Agency (member workspaces grant immediately). Organization id `01a109d1-32a9-71a3-a0e3-658b2a7987cd` (from `sokosumi --preprod workspaces list --json`) is set in `ALLOWED_ORGANIZATION_IDS` on Railway. `coworkers connect` created workspace access `01a11300-e988-720e-ad91-18dbbbb840a8`, status PENDING until an org owner or admin approves it.
 
 Team portrait for the Coworker profile: `assets/travel-expert-team.jpg` (559 KB).
 
