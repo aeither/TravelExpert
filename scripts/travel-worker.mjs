@@ -9,7 +9,7 @@ import { createEveClient } from './eve-client.mjs';
 import { hostedPaidConfiguration } from './hosted.mjs';
 import { createAdvisor } from './advisor.mjs';
 import { travelPrompt } from './agent-api.mjs';
-import { CLOSING, NOT_OPENED, answerToOffer, collectionComment, feeFor, handoverText, paymentComment, proofBlock } from './booking-copy.mjs';
+import { txUrl, CLOSING, NOT_OPENED, answerToOffer, collectionComment, feeFor, handoverText, paymentComment, proofBlock } from './booking-copy.mjs';
 
 const POLL_MS = 10_000;
 const COLLECT_GRACE_MS = 30 * 60_000;
@@ -19,15 +19,45 @@ const readPlan = async (dir, taskId) => { try { return JSON.parse(await readFile
 
 // Plan (free) -> the traveller says "book" -> checkout opened first -> dynamic fee in escrow -> hash -> checkout handed over -> payout proof.
 // Every step persists before and after an external write, and never retries a possibly charged step on its own.
+const flat = value => String(value ?? '').replace(/\s+/g, ' ').slice(0, 60);
+export function describeAction(action) {
+  const input = action?.input ?? {};
+  switch (action?.toolName) {
+    case 'destination_info': return `Orchestrator → Expert Travel Agency knowledge desk (another agent): asking about ${flat(input.destination)}…`;
+    case 'search_hotels': return `Orchestrator → Expert Travel Agency hotel search: ${flat(input.city)}, check-in ${flat(input.check_in)}, ${flat(input.nights)} night(s)…`;
+    case 'save_plan': return 'Saving your plan, so replying "book" can continue it…';
+    default: return undefined;
+  }
+}
+export function describeResult(result) {
+  const out = result?.output;
+  if (Array.isArray(out?.hotels)) return `Found ${out.hotels.length} hotel option${out.hotels.length === 1 ? '' : 's'} with live rates.`;
+  if (typeof out?.answer === 'string') return 'The knowledge desk answered.';
+  if (out?.saved) return 'Plan saved.';
+  return undefined;
+}
+
 export function createTravelWorker({ api, mps, eve, advisor, store, source, coworkerId, dataDir, log = console.log, runAgent }) {
   let polls = 0;
   const events = async id => (await api.get(`/v1/tasks/${safeId(id)}/events?limit=100`)).data;
   const post = (id, body) => api.post(`/v1/tasks/${safeId(id)}/events`, body);
-  const turn = runAgent ?? (async prompt => {
+  const turn = runAgent ?? (async (prompt, onEvent) => {
     const { session } = await eve.sessions.create();
-    const result = await (await session.send(prompt)).result();
-    if (!['waiting', 'completed'].includes(result.status) || result.inputRequests?.length || result.events?.some(e => ['authorization.required', 'turn.failed'].includes(e.type)) || !result.message?.trim()) throw new Error('The agent returned no answer.');
-    return result.message.trim();
+    const response = await session.send(prompt);
+    if (!onEvent) {
+      const result = await response.result();
+      if (!['waiting', 'completed'].includes(result.status) || result.inputRequests?.length || result.events?.some(e => ['authorization.required', 'turn.failed'].includes(e.type)) || !result.message?.trim()) throw new Error('The agent returned no answer.');
+      return result.message.trim();
+    }
+    // Reading the stream shows what the agent is doing while it works, so a long turn is never silent. The stream cannot be read twice, so the answer comes from it too.
+    let message = '', failed = false, reason = '';
+    for await (const event of response) {
+      if (['turn.failed', 'authorization.required'].includes(event.type)) { failed = true; reason = String(event.data?.error?.message ?? event.data?.message ?? '').slice(0, 300); }
+      if (event.type === 'message.completed' && event.data?.finishReason !== 'tool-calls' && typeof event.data?.message === 'string') message = event.data.message;
+      try { await onEvent(event); } catch { /* progress is best effort */ }
+    }
+    if (failed || !message.trim()) throw new Error(`The agent returned no answer.${reason ? ` ${reason}` : ''}`);
+    return message.trim();
   });
 
   // The traveller's answer to our last question: the newest user comment after it, or a new description set back to Ready.
@@ -41,6 +71,17 @@ export function createTravelWorker({ api, mps, eve, advisor, store, source, cowo
     st.used = [...(st.used ?? []), answer.id];
     return { text: answer.comment.trim() };
   }
+
+  // Progress comments: one per distinct step, never a status change. Best effort, so a failed comment never stops the work.
+  const reporter = taskId => {
+    const said = new Set();
+    const say = async text => { if (said.has(text)) return; said.add(text); try { await post(taskId, { comment: text }); } catch { /* ignore */ } };
+    return async event => {
+      if (event.type === 'actions.requested') for (const action of event.data?.actions ?? []) { const line = describeAction(action); if (line) await say(line); }
+      else if (event.type === 'action.result') { const line = describeResult(event.data?.result); if (line) await say(line); }
+      else if (event.type === 'step.started' && event.data?.stepIndex > 0) await say('Putting the answer together…');
+    };
+  };
 
   const finish = async (task, st, save, text, status = 'COMPLETED') => {
     st.phase = 'complete-pending'; st.final = text; await save();
@@ -60,7 +101,8 @@ export function createTravelWorker({ api, mps, eve, advisor, store, source, cowo
   async function plan(task, st, save) {
     const earlier = [st.input, st.context].filter(Boolean).join(' ');
     const text = st.reply !== undefined ? `Original request: ${earlier}\nTraveller's reply to my last message: ${st.reply}` : earlier;
-    const answer = await turn(`${travelPrompt(text)}\nTask reference: ${task.id}`);
+    await post(task.id, { comment: 'Working on your request. I will report each step here.' }).catch(() => {});
+    const answer = await turn(`${travelPrompt(text)}\nTask reference: ${task.id}`, reporter(task.id));
     const saved = await readPlan(dataDir, task.id);
     if (saved) { st.plan = saved; return askUser(task, st, save, answer, 'offer'); }
     // Asking something without having planned anything is a question: the task waits for the traveller.
@@ -71,6 +113,7 @@ export function createTravelWorker({ api, mps, eve, advisor, store, source, cowo
   async function booking(task, st, save) {
     const p = st.paid ?? {};
     if (!st.checkout) {
+      await post(task.id, { comment: 'Orchestrator → Expert Travel Advisor: opening the hotel checkout (nothing is charged yet)…' }).catch(() => {});
       const opened = await advisor.openCheckout(st.plan);
       if (!opened.opened) return finish(task, st, save, NOT_OPENED(opened.failure_reason));
       st.checkout = opened.checkout; st.plan = { ...st.plan, hotel: opened.hotel, ...(opened.swappedFrom ? { swappedFrom: opened.swappedFrom } : {}) };
@@ -98,6 +141,7 @@ export function createTravelWorker({ api, mps, eve, advisor, store, source, cowo
         return 'waiting';
       }
       paid.escrowTx = now.CurrentTransaction.txHash; paid.fundedPayment = now; paid.stage = 'escrow-confirmed';
+      await post(task.id, { comment: `Escrow confirmed on-chain: ${txUrl(paid.escrowTx)}\nSubmitting my result hash…` }).catch(() => {});
       st.answer = handoverText(st.plan, st.checkout, task.id); await save();
     }
     if (paid.stage === 'escrow-confirmed') {
@@ -129,7 +173,8 @@ export function createTravelWorker({ api, mps, eve, advisor, store, source, cowo
       const choice = st.reason === 'offer' && !answer.fromEdit ? answerToOffer(answer.text) : undefined;
       if (answer.fromEdit) { st.input = task.description; st.context = ''; delete st.plan; }
       else st.reply = answer.text;
-      if (task.status === 'READY') { await post(task.id, { status: 'RUNNING' }); }
+      // Show the traveller that work resumed. A failed status write must not stop the booking.
+      await post(task.id, { status: 'RUNNING' }).catch(() => {});
       st.phase = choice === 'yes' ? 'booking' : choice === 'no' ? 'closing' : 'planning'; await save();
     } else if (st.phase === 'new') {
       st.phase = 'start-pending'; await save();
@@ -147,7 +192,8 @@ export function createTravelWorker({ api, mps, eve, advisor, store, source, cowo
       if (['planning', 'closing'].includes(st.phase) && !st.paid) {
         // Nothing was charged: tell the traveller and block the task for inspection.
         st.phase = 'blocked'; st.reason = 'FAILED'; await save();
-        await post(task.id, { status: 'FAILED', comment: 'Sorry, I could not finish this. Please try again in a minute.' }).catch(() => {});
+        const quota = /rate limit|quota|free-models-per-day/i.test(String(error?.message));
+        await post(task.id, { status: 'FAILED', comment: quota ? 'The AI model I use has reached its free daily limit, so I could not plan this. Nothing was charged. Please try again later.' : 'Sorry, I could not finish this. Please try again in a minute.' }).catch(() => {});
         return 'failed';
       }
       st.inspectionRequired = true; await save(); return 'inspection_required';
@@ -165,8 +211,14 @@ export function createTravelWorker({ api, mps, eve, advisor, store, source, cowo
     if (!next) return 0;
     // At most once: remember the comment before answering, so a crash never posts two replies.
     st.used = [...(st.used ?? []), next.id]; await store.save(st);
-    const answer = await turn(`Mode: follow-up\n${travelPrompt(`The task's final answer:\n${String(st.final).slice(0, 4000)}\n\nNew comment from the traveller: ${next.comment.trim().slice(0, 2000)}`)}`);
-    await post(st.taskId, { comment: answer.slice(0, 20000) });
+    // Same visible statuses as the first request: Running while it works, Completed with the answer.
+    const reopened = await post(st.taskId, { status: 'RUNNING', comment: 'Looking into your follow-up…' }).then(() => true, () => false);
+    let answer;
+    try { answer = await turn(`Mode: follow-up\n${travelPrompt(`The task's final answer:\n${String(st.final).slice(0, 4000)}\n\nNew comment from the traveller: ${next.comment.trim().slice(0, 2000)}`)}`, reporter(st.taskId)); }
+    catch { answer = 'Sorry, I could not answer that follow-up. Please try again in a minute.'; }
+    const text = answer.slice(0, 20000);
+    if (reopened) await post(st.taskId, { status: 'COMPLETED', comment: text }).catch(() => post(st.taskId, { comment: text }));
+    else await post(st.taskId, { comment: text });
     return 1;
   }
 

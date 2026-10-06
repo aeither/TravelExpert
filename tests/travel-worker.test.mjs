@@ -81,8 +81,9 @@ async function fixture(t, { agentText = 'PLAN TEXT\nWould you like me to open th
 test('a trip request gets a free plan and waits for "book" or "no"', async t => {
   const f = await fixture(t);
   await f.worker.advance(f.task);
-  assert.deepEqual(f.sent.map(e => e.status), ['RUNNING', 'INPUT_REQUIRED']);
-  assert.match(f.sent[1].comment, /^PLAN TEXT/);
+  assert.deepEqual(f.sent.map(e => e.status).filter(Boolean), ['RUNNING', 'INPUT_REQUIRED']);
+  assert.match(f.sent.at(-1).comment, /^PLAN TEXT/);
+  assert.ok(f.sent.some(e => !e.status && /Working on your request/.test(e.comment)));
   assert.equal(f.sent.some(e => e.masumiPayment), false);
   assert.match(f.prompts[0], /Task reference: task_abcdefgh/);
 });
@@ -140,7 +141,7 @@ test('a missing detail becomes a question and the answer continues the same task
   assert.match(f.prompts.at(-1), /Traveller's reply to my last message: 20 November/);
 });
 
-test('a comment on a finished task gets one free reply and no status change', async t => {
+test('a comment on a finished task shows Running, then Completed with the answer, and is answered once', async t => {
   const f = await fixture(t);
   await f.worker.advance(f.task); f.reply('no thanks'); await f.worker.advance(f.task);
   const st = await f.store.read(f.task.id);
@@ -150,9 +151,17 @@ test('a comment on a finished task gets one free reply and no status change', as
   f.eventsList.push({ id: 'u99', taskId: f.task.id, comment: 'What about breakfast?', actor: { id: 'user1', type: 'user' }, createdAt: new Date(Date.now() + 60_000).toISOString() });
   const before = f.sent.length;
   assert.equal(await f.worker.followUps(st, f.task), 1);
-  assert.equal(f.sent.length, before + 1);
-  assert.equal(f.sent.at(-1).status, undefined);
+  assert.deepEqual(f.sent.slice(before).map(e => e.status), ['RUNNING', 'COMPLETED']);
   assert.match(f.prompts.at(-1), /Mode: follow-up/);
   assert.match(f.prompts.at(-1), /What about breakfast/);
   assert.equal(await f.worker.followUps(st, f.task), 0);
+});
+
+test('progress lines name the other agent and what it found', async () => {
+  const { describeAction, describeResult } = await import('../scripts/travel-worker.mjs');
+  assert.match(describeAction({ toolName: 'destination_info', input: { destination: 'Cebu' } }), /knowledge desk \(another agent\).*Cebu/);
+  assert.match(describeAction({ toolName: 'search_hotels', input: { city: 'Cebu', check_in: '2026-11-20', nights: 2 } }), /Expert Travel Agency hotel search: Cebu, check-in 2026-11-20, 2 night/);
+  assert.equal(describeAction({ toolName: 'other' }), undefined);
+  assert.equal(describeResult({ output: { hotels: [{}, {}] } }), 'Found 2 hotel options with live rates.');
+  assert.equal(describeResult({ output: { answer: 'x' } }), 'The knowledge desk answered.');
 });
