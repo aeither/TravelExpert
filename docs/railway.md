@@ -26,7 +26,11 @@ Registered on the Railway `mps` node (Preprod, type Standard, Dynamic pricing) w
 
 ## Sokosumi
 
-Coworker **Travel Expert**, id `01a112c7-de40-761e-80ae-113072c5c70f`, Vendor Bebop (`01a11100-22ad-74ca-8076-05a63cbabe04`), Personal Workspace access GRANTED. The runtime key was created with `sokosumi coworkers api-key` and stored only in Railway. Tasks in an organization Workspace need an approved event or workspace connection first (`sokosumi coworkers connect`); the worker currently serves personal-workspace tasks only (`validateTask`).
+Coworker **Travel Expert**, id `01a112c7-de40-761e-80ae-113072c5c70f`, Vendor Bebop (`01a11100-22ad-74ca-8076-05a63cbabe04`), Personal Workspace access GRANTED. The runtime key was created with `sokosumi coworkers api-key` and stored only in Railway. Tasks in an organization Workspace need an approved event or workspace connection first (`sokosumi coworkers connect`); the worker serves Personal Workspace tasks plus any organization whose id is in `ALLOWED_ORGANIZATION_IDS` (`scripts/workspaces.mjs`).
+
+Early access (Sokosumi admin, Coworker early access): Personal Workspace of Giovanni (`01a110c4-6ac0-75ab-bca1-ab00c0ac99b0`) GRANTED. Organization **TOKEN2049 Origins Hackathon 2026**, slug `token2049-origins-hackathon-2026-nws2r7`, must be granted to Travel Expert the same way as to Expert Travel Agency (member workspaces grant immediately). Then set its organization id in `ALLOWED_ORGANIZATION_IDS` on Railway and redeploy.
+
+Team portrait for the Coworker profile: `assets/travel-expert-team.jpg` (559 KB).
 
 Each task is charged 1 test USDM: quote, `masumiPayment` event, escrow confirmed, agent runs, result hash submitted, task completed. The payout is collected by the payment node after the unlock time. The worker does not wait for it: `settleDue()` checks completed tasks on every poll and verifies the seller receipt on-chain. A task whose collection window closes without a receipt is flagged `inspectionRequired`.
 
