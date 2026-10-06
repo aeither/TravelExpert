@@ -27,3 +27,21 @@ test('past check-in and upstream failures return an error the agent can explain'
   assert.match((await searchHotels(input(), async () => new Response('x', { status: 502 }))).error, /HTTP 502/);
   assert.match((await searchHotels(input(), async () => Response.json({ data: { hotels: [] } }))).error, /No hotel/);
 });
+
+test('paid mode buys the search once, caches it, and fails closed', async () => {
+  const { paidStaysSearch } = await import('../agent/lib/hotels.ts');
+  const { mkdtemp } = await import('node:fs/promises');
+  const { tmpdir } = await import('node:os');
+  const { join } = await import('node:path');
+  const dir = await mkdtemp(join(tmpdir(), 'paid-'));
+  const config = { mpsUrl: 'https://mps.test/api/v1', token: 't', agentIdentifier: 'a'.repeat(60), dir, maxPerHour: 12 };
+  let bought = 0;
+  const buy = async ({ inputData }) => { bought++; return { result: JSON.stringify({ results: { stays: { data: { hotels: [{ id: '1' }] }, seen: inputData } } }) }; };
+  const first = await paidStaysSearch({ stays: { x: 1 } }, config, buy);
+  const again = await paidStaysSearch({ stays: { x: 1 } }, config, buy);
+  assert.equal(first.data.hotels[0].id, '1');
+  assert.equal(again, first);
+  assert.equal(bought, 1);
+  await assert.rejects(paidStaysSearch({ stays: { x: 2 } }, config, async () => ({ result: null })), /no result/);
+  await assert.rejects(paidStaysSearch({}, null), /not configured/);
+});

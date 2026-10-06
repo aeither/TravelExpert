@@ -30,10 +30,13 @@ Every external write is journaled first (`$DATA_DIR/a2a/<id>.json`). A restart l
 - **Seller collection is pending.** The seller can withdraw only after the unlock time. Until a `Withdrawn` state and collection transaction are checked on-chain, this is reported as pending, not as received.
 - Two earlier attempts (`a2a_5362…`, `a2a_90e9…`) never created a visible purchase and moved no funds (wallet balance unchanged). Their journals are marked abandoned.
 
+## Paid hotel search (live from 2026-10-07)
+
+`search_hotels` (and `save_plan`) now hire the Expert Travel Agency through this buyer when `A2A_PAID_SEARCH=1` and `MPS_URL`, `MPS_BUYER_TOKEN`, `A2A_AGENT_IDENTIFIER` are set (Railway variables on `travel-expert`). Each search costs 1 test USDM and takes about 2.5 minutes (fund-lock batch window plus confirmations). Identical searches are cached for 15 minutes, at most `A2A_MAX_PER_HOUR` (default 12) paid searches run per hour, and a failed payment returns an error instead of falling back to the free endpoint. Without the flag the tool uses the free `/v1/stays/search`. The knowledge tool (`destination_info`) still uses the internal bearer key and is not paid yet.
+
 ## Not done yet
 
 - The advisor at `expert-travel-advisor-eve.vercel.app` (registered identifier `67ab0c92…000001`) does not serve MIP-003 routes, so Travel Expert cannot buy from it yet. Its source is not in this account.
-- The travel worker does not call the agency through this buyer yet; `search_hotels` still uses the internal API key.
 
 ## Run it
 
