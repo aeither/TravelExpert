@@ -8,6 +8,7 @@ import { createHttpClient } from './sokosumi-http.mjs';
 import { createEveClient } from './eve-client.mjs';
 import { hostedPaidConfiguration } from './hosted.mjs';
 import { createAdvisor } from './advisor.mjs';
+import { payForBooking } from '../agent/lib/hotels.ts';
 import { travelPrompt } from './agent-api.mjs';
 import { txUrl, CLOSING, NOT_OPENED, answerToOffer, collectionComment, feeFor, handoverText, paymentComment, proofBlock } from './booking-copy.mjs';
 import { inAllowedWorkspace } from './workspaces.mjs';
@@ -25,7 +26,7 @@ export function describeAction(action) {
   const input = action?.input ?? {};
   switch (action?.toolName) {
     case 'destination_info': return `Orchestrator → Expert Travel Agency knowledge desk (another agent): asking about ${flat(input.destination)}…`;
-    case 'search_hotels': return `Orchestrator → Expert Travel Agency hotel search: ${flat(input.city)}, check-in ${flat(input.check_in)}, ${flat(input.nights)} night(s). Paying 1 test USDM through Masumi, so this waits for on-chain confirmation (about 2 to 3 minutes)…`;
+    case 'search_hotels': return `Orchestrator → Expert Travel Advisor hotel search: ${flat(input.city)}, check-in ${flat(input.check_in)}, ${flat(input.nights)} night(s). Paying 1 test USDM to Expert Travel Advisor, so this waits for on-chain confirmation (about 2 to 3 minutes)…`;
     case 'save_plan': return 'Saving your plan, so replying "book" can continue it…';
     default: return undefined;
   }
@@ -118,6 +119,18 @@ export function createTravelWorker({ api, mps, eve, advisor, store, source, cowo
 
   async function booking(task, st, save) {
     const p = st.paid ?? {};
+    if (typeof advisor.payForBooking === 'function') {
+      if (!st.checkout) {
+        await post(task.id, { comment: 'Orchestrator → Expert Travel Advisor: paying 1 test USDM and opening the hotel checkout…' }).catch(() => {});
+        const paid = await advisor.payForBooking(st.plan);
+        if (!paid.opened) return finish(task, st, save, NOT_OPENED(paid.failure_reason));
+        st.checkout = paid.checkout;
+        st.advisorTx = paid.txHash || '';
+        await save();
+      }
+      const proof = st.advisorTx ? `\n\nPaid Expert Travel Advisor. Escrow lock: ${txUrl(st.advisorTx)}` : '';
+      return finish(task, st, save, handoverText(st.plan, st.checkout, task.id) + proof);
+    }
     if (!st.checkout) {
       await post(task.id, { comment: 'Orchestrator → Expert Travel Advisor: opening the hotel checkout (nothing is charged yet)…' }).catch(() => {});
       const opened = await advisor.openCheckout(st.plan);
@@ -278,7 +291,7 @@ async function main() {
   const config = hostedPaidConfiguration();
   const dataDir = resolve(process.env.DATA_DIR || resolve(import.meta.dirname, '../.local'));
   const worker = createTravelWorker({
-    api: createHttpClient(process.env.SOKOSUMI_COWORKER_API_KEY), mps: config.mps, eve: createEveClient(), advisor: createAdvisor(process.env.ADVISOR_URL || 'https://expert-travel-advisor-eve.vercel.app'),
+    api: createHttpClient(process.env.SOKOSUMI_COWORKER_API_KEY), mps: config.mps, eve: createEveClient(), advisor: Object.assign(createAdvisor(process.env.ADVISOR_URL || 'https://expert-travel-advisor-eve.vercel.app'), { payForBooking }),
     store: await createStore(resolve(dataDir, 'travel')), source: config.source, coworkerId: config.coworkerId, dataDir,
   });
   const stop = new AbortController();

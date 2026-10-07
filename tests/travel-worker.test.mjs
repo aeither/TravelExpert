@@ -160,7 +160,7 @@ test('a comment on a finished task shows Running, then Completed with the answer
 test('progress lines name the other agent and what it found', async () => {
   const { describeAction, describeResult } = await import('../scripts/travel-worker.mjs');
   assert.match(describeAction({ toolName: 'destination_info', input: { destination: 'Cebu' } }), /knowledge desk \(another agent\).*Cebu/);
-  assert.match(describeAction({ toolName: 'search_hotels', input: { city: 'Cebu', check_in: '2026-11-20', nights: 2 } }), /Expert Travel Agency hotel search: Cebu, check-in 2026-11-20, 2 night/);
+  assert.match(describeAction({ toolName: 'search_hotels', input: { city: 'Cebu', check_in: '2026-11-20', nights: 2 } }), /Expert Travel Advisor hotel search: Cebu, check-in 2026-11-20, 2 night/);
   assert.equal(describeAction({ toolName: 'other' }), undefined);
   assert.equal(describeResult({ output: { hotels: [{}, {}] } }), 'Found 2 hotel options with live rates.');
   assert.equal(describeResult({ output: { answer: 'x' } }), 'The knowledge desk answered.');
