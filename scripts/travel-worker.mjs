@@ -25,7 +25,7 @@ export function describeAction(action) {
   const input = action?.input ?? {};
   switch (action?.toolName) {
     case 'destination_info': return `Orchestrator → Expert Travel Agency knowledge desk (another agent): asking about ${flat(input.destination)}…`;
-    case 'search_hotels': return `Orchestrator → Expert Travel Agency hotel search: ${flat(input.city)}, check-in ${flat(input.check_in)}, ${flat(input.nights)} night(s)…`;
+    case 'search_hotels': return `Orchestrator → Expert Travel Agency hotel search: ${flat(input.city)}, check-in ${flat(input.check_in)}, ${flat(input.nights)} night(s). Paying 1 test USDM through Masumi, so this waits for on-chain confirmation (about 2 to 3 minutes)…`;
     case 'save_plan': return 'Saving your plan, so replying "book" can continue it…';
     default: return undefined;
   }
