@@ -62,7 +62,13 @@ test('book sends an idempotency key, confirm and a max_total just above the chec
   assert.equal(seen[0].body.offer_id, 'offer-ok');
   assert.equal(seen[0].body.max_total.currency, 'USD');
   assert.ok(Number(seen[0].body.max_total.amount) >= 125 && Number(seen[0].body.max_total.amount) <= 140);
-  assert.equal(seen[0].body.guests.length, 2);
+  assert.equal(seen[0].body.guests.length, 1); // LiteAPI rejects several guests sharing one room: one lead guest per room
+  assert.equal(seen[0].body.guests[0].given_name, 'Alex');
+});
+
+test('a supplier rejection that origin-api reports as 502 UPSTREAM_REJECTED (state failed) is definite: nothing was booked', async () => {
+  const booker = createOriginBooker({ ...config, fetch: async () => Response.json({ error: { code: 'UPSTREAM_REJECTED', message: 'Supplier HTTP 400.', details: { state: 'failed', upstream_status: 400 } } }, { status: 502 }) });
+  await assert.rejects(booker.book({ taskId: 'task_abcdefgh', hotel: plan.hotel, offer: { offer_id: 'o' }, total: { amount: '1', currency: 'USD' }, guest: config.guest, adults: 2 }), e => e.definite === true && e.code === 'UPSTREAM_REJECTED');
 });
 
 test('book reports a definite rejection as retryable=false and a timeout as unknown', async () => {

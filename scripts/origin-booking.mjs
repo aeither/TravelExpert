@@ -48,19 +48,20 @@ export function createOriginBooker({ baseUrl, apiKey, guest, fetch: send = fetch
   }
 
   // `definite` tells the caller whether the supplier definitely did not book (true) or the outcome is unknown (false).
-  async function book({ taskId, hotel, offer, total, guest: who = guest, adults = 1 }) {
+  async function book({ taskId, hotel, offer, total, guest: who = guest }) {
     const cap = money(Number(total.amount) * CAP_MARGIN);
     let result;
     try {
       result = await call('/v1/stays/bookings', {
         offer_id: offer.offer_id, confirm: true, max_total: { amount: cap, currency: total.currency },
-        guests: Array.from({ length: Math.max(1, adults) }, (_, i) => ({ given_name: i === 0 ? who.given_name : 'Guest', family_name: who.family_name, email: who.email, occupancy_number: 1 })),
+        // One lead guest per room: LiteAPI rejects several guests that share a room (verified live 2026-10-07).
+        guests: [{ given_name: who.given_name, family_name: who.family_name, email: who.email, occupancy_number: 1 }],
       }, { 'idempotency-key': bookingKey(taskId, hotel.id) });
     } catch (error) { throw Object.assign(new Error(`The booking outcome is unknown (${String(error?.message ?? error).slice(0, 80)}).`), { definite: false, code: 'UNKNOWN' }); }
     const { response, payload } = result;
     if (!response.ok) {
       const code = payload?.error?.code ?? `HTTP_${response.status}`;
-      throw Object.assign(new Error(payload?.error?.message ?? `The booking was rejected (${code}).`), { definite: response.status >= 400 && response.status < 500, code });
+      throw Object.assign(new Error(payload?.error?.message ?? `The booking was rejected (${code}).`), { definite: (response.status >= 400 && response.status < 500) || (code === 'UPSTREAM_REJECTED' && payload?.error?.details?.state === 'failed'), code });
     }
     const data = payload.data ?? payload;
     if (!data?.id) throw Object.assign(new Error('The booking answer had no booking id.'), { definite: false, code: 'NO_BOOKING_ID' });
