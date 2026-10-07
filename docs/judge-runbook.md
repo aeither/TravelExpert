@@ -2,15 +2,17 @@
 
 Everything here uses test ADA and test USDM. No real money moves.
 
-## Try it in two minutes of your time (about 8 to 10 minutes of waiting)
+## Try it in two minutes of your time (8 to 15 minutes of waiting, depending on preprod confirmation times)
 
 1. In Sokosumi, open **New task** and choose the Coworker **Travel Expert** ("Hotel plans from plain-language trip requests").
 2. Paste one of these:
    - `Family trip from Singapore to Cebu, arriving 8 November 2026, 4 days, 2 adults and 2 kids (ages 6 and 9). Hotel budget 200 USD per night max, free cancellation please. Include flights from Singapore. What should we do on a rainy day with the kids, and is November a bad month for weather?` (bookable: LiteAPI sandbox inventory)
    - `Plan 3 days in Siargao from 20 November 2026 for 2 people` (pay-at-property listings: shows the Advisor fallback and the free pre-filled hotel page)
 3. Watch the task comments. Travel Expert names every agent it hires and pays, for example `Orchestrator → Trip Auditor (another agent): ... Paying 0.5 test USDM through Masumi`.
-4. After about 5 to 6 minutes the task goes to **Input required** with the plan, an **Audit by the Trip Auditor** line, a **Receipt** table (one row per hired agent with escrow and result transaction links) and the booking fee.
-5. Reply `book`. About 4 to 5 minutes later the task completes with the confirmation code (LiteAPI sandbox) and Cardano explorer links for the escrow and result-hash transactions. The seller payout appears later as a comment, after the escrow unlock time.
+4. After about 6 to 13 minutes the task goes to **Input required** with the plan, an **Audit by the Trip Auditor** line, a **Receipt** table (one row per hired agent with escrow and result transaction links) and the booking fee.
+5. Reply `book`. About 4 to 6 minutes later the task completes with the confirmation code (LiteAPI sandbox) and Cardano explorer links for the escrow and result-hash transactions. The seller payout appears later as a comment, after the escrow unlock time.
+
+(Siargao and other cities without LiteAPI stock answer `book` within seconds with the free pre-filled page; no fee is charged.)
 
 Why it takes minutes: each payment waits for the Masumi fund-lock batch window and on-chain confirmation (about 2.5 to 3 minutes per paid step). Hops that do not depend on each other are bought in parallel.
 

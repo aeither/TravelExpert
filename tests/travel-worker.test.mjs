@@ -202,6 +202,13 @@ test('the plan gets the reviewer text, the receipt and the booking fee before th
   assert.ok(receiptAt > 0 && feeAt > receiptAt && questionAt > feeAt, offer);
 });
 
+test('the fee line tells the truth for pay-at-property stays: free when only a pre-filled page can be opened', async () => {
+  const { offerFeeLine } = await import('../scripts/booking-copy.mjs');
+  assert.match(offerFeeLine(lite), /locked in escrow first/);
+  const line = offerFeeLine(plan);
+  assert.match(line, /pre-filled hotel page for free/); assert.match(line, /Booking fee if you reply "book"/);
+});
+
 test('a failing reviewer or receipt never blocks the plan', async t => {
   const f = await fixture(t, { plan: lite, deps: { review: async () => { throw new Error('boom'); }, receipt: async () => { throw new Error('boom'); } } });
   await f.worker.advance(f.task);

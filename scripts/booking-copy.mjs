@@ -52,7 +52,8 @@ export function handoverText(plan, checkout, taskId, booking) {
 // The booking fee and what happens on "book", stated before the traveller decides.
 export function offerFeeLine(plan) {
   const fee = feeFor(plan.hotel?.total);
-  return `Booking fee if you reply "book": ${usdm(fee.usdm)} (about 2% of the hotel total). It is locked in escrow first, I only submit my result after your stay is ${plan.hotel?.source === 'liteapi' ? 'booked' : 'opened'}, and nothing else is charged.`;
+  if (plan.hotel?.source === 'liteapi') return `Booking fee if you reply "book": ${usdm(fee.usdm)} (about 2% of the hotel total). It is locked in escrow first, I only submit my result after your stay is booked, and nothing else is charged.`;
+  return `Booking fee if you reply "book": ${usdm(fee.usdm)} (about 2% of the hotel total), charged only if I can open a hotel checkout for you. If the supplier cannot, I send the pre-filled hotel page for free and say there is no reservation.`;
 }
 
 // Adds blocks (receipt, fee) just before the closing question so the question stays the last line.

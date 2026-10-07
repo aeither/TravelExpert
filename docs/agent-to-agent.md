@@ -43,6 +43,8 @@ All hops now go through `buyService` (`agent/lib/paid.ts`): hotel search and fli
 - Reply "book": dry-run re-check, fee of 2 test USDM in escrow (tx `5e73e64c5e80c16f0beb5c354724bd7a8f53acb0ec4eea6a95baa1e3cf96e2ef`), LiteAPI sandbox booking `yt9EHruBy` CONFIRMED (code `test`), result hash tx `e55d375383ae3beab93086a3174a5ce102611b08e2e7b7b87304006142b571a9`, task Completed.
 - Seller payouts are still pending: the seller can collect only after the unlock time. They are reported as pending, not received.
 
+Second verified run, 2026-10-08, Siargao (no LiteAPI stock), task `01a1171e-923c-754e-b75c-6c042e69cd4d`: three paid hops (knowledge, hotel search, audit) with a receipt, then `book` returned the pre-filled Hotels.com page in seconds with no charge and an explicit "no reservation yet".
+
 Issues found and fixed during the run:
 
 - The `mps` seller wallet ran out of test ADA (5.6 ADA, 7 needed for collateral prep). Result submissions stalled for about 12 minutes until the wallet was topped up from https://dispenser.masumi.network. Keep the seller wallet funded (`addr_test1qrxk7ly3666nv8agvr6ylxn0lfycwnqjzmhynwxnjlxz7f9ehwykv3ee8k2hyts0y97w2th2qh7jqedkpaguzeh3fp7sw3t9vu`) before a demo.
