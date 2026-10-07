@@ -82,6 +82,6 @@ flowchart LR
 | Hotel search and booking Coworker (Expert Travel Advisor) | [armsves/expert-travel-advisor-origins](https://github.com/armsves/expert-travel-advisor-origins) |
 | Hosting | `Dockerfile`, `scripts/railway-start.mjs`, [docs/railway.md](docs/railway.md) |
 
-Run the tests with `npm test` (Node 24 or later). Deployment, registration and the Sokosumi Coworker are described in [docs/railway.md](docs/railway.md). Files from the original event guide that are not listed here (`status.md`, `docs/bugs.md`, `docs/decisions.md`, `docs/interfaces.md`, `docs/payment-hashing.md`, `docs/setup-state.json`) describe the template's local setup and are kept for reference only.
+Judges: see [docs/judge-runbook.md](docs/judge-runbook.md). Run the tests with `npm test` (Node 24 or later). Deployment, registration and the Sokosumi Coworker are described in [docs/railway.md](docs/railway.md). Files from the original event guide that are not listed here (`status.md`, `docs/bugs.md`, `docs/decisions.md`, `docs/interfaces.md`, `docs/payment-hashing.md`, `docs/setup-state.json`) describe the template's local setup and are kept for reference only.
 
 Limits: supplier data is sandbox or pay-at-property inventory (see Honest limits above), flights are indicative test fares that cannot be booked here, and payments are Cardano Preprod test USDM only.
