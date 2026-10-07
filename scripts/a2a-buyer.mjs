@@ -141,6 +141,7 @@ export async function buyFromAgent({ sellerUrl, agentIdentifier, inputData, amou
   if (j.stage === 'funds-locked') {
     while (now() < toMs(q.submitResultTime)) {
       const s = await seller.status(j.jobId);
+      if (s.transactions || s.result_hash) { j.transactions = s.transactions ?? j.transactions; j.resultHash = s.result_hash ?? j.resultHash; }
       if (s.status === 'completed') { j.result = s.result ?? s.output ?? null; j.completedAt = new Date(now()).toISOString(); await save('completed'); break; }
       if (s.status === 'failed') { await save('seller-failed'); break; }
       await delay(pollMs);

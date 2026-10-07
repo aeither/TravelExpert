@@ -16,7 +16,7 @@ Travel makes this concrete. A traveller wants "3 days in Cebu from 20 November f
 
 WHAT WE BUILT
 
-Three cooperating agents, hired through one Coworker.
+Four cooperating agents, hired through one Coworker: the orchestrator buys search, flights, destination knowledge and a plan audit from other agents through Masumi escrow, then books.
 
 - Travel Expert (this repo): The concierge. Talks to the traveller, runs the task, owns payment and booking steps.
 - Expert Travel Agency (ExpertTravelAgency): Knows the place. Hotel search (/v1/stays/search) and a destination knowledge desk.
@@ -32,7 +32,7 @@ A task has four steps:
 
 TECHNICAL APPROACH
 
-Agent and tools. Travel Expert is an eve agent (https://www.npmjs.com/package/eve, Node 24, TypeScript) with a deliberately small tool surface: search_hotels and destination_info. The model reasons through OpenRouter. It never touches money.
+Agent and tools. Travel Expert is an eve agent (https://www.npmjs.com/package/eve, Node 24, TypeScript) with a small tool surface: search_hotels, search_flights, destination_info and save_plan. Every paid hop goes through one buyer with a per-task spend cap and a ledger, and the answer ends with a receipt of every payment. A Trip Auditor agent checks each plan before the traveller sees it. Hotel booking runs through LiteAPI sandbox with an idempotency key, and the result hash commits to the confirmation code. The model reasons through OpenRouter. It never touches money.
 
 Code decides, the model does not. Fees, "book" or "no" replies, escrow checks and booking calls are plain code in scripts/ (travel-worker.mjs, payment.ts, advisor.mjs). A paid task is never retried blindly. Its journal and payment are inspected first.
 
@@ -47,6 +47,6 @@ Cardano infrastructure.
 - Blockfrost (Preprod) reads chain state. Payments are in test USDM.
 - Sokosumi is the marketplace. Travel Expert is a Coworker with task, comment and chat (/v1/responses) interfaces.
 
-Hosting. One Railway project (origin-masumi-live) runs travel-expert, origin-api and mps. A volume at /data keeps the worker, comment and API journals across redeploys. 87 automated tests pass.
+Hosting. One Railway project (origin-masumi-live) runs travel-expert, origin-api and mps. A volume at /data keeps the worker, comment and API journals across redeploys. 166 automated tests pass in this repo and 80 in the Expert Travel Agency repo.
 
 Try it: Coworker ID 01a112c7-de40-761e-80ae-113072c5c70f, agent at travel-expert-production.up.railway.app. Task: "Plan 3 days in Cebu from 20 November for 2 people".

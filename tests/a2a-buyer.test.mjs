@@ -80,3 +80,15 @@ test('a 404 right after the purchase is treated as pending, not as failure', asy
   const { journal } = await buyFromAgent({ sellerUrl: 'https://seller.test', agentIdentifier: AGENT, inputData: {}, mps, store, fetch: f.seller, pollMs: 1 });
   assert.equal(journal.stage, 'completed');
 });
+
+test('the seller transactions and result hash are kept in the journal so the receipt can show them', async () => {
+  const f = fakes(); const store = await openA2aStore(await mkdtemp(join(tmpdir(), 'a2a-')));
+  const seller = async (url, init) => {
+    if (new URL(url).pathname !== '/status') return f.seller(url, init);
+    return json({ status: 'completed', result: 'plan', result_hash: 'rh', transactions: { payment: 'pay-tx', result: 'res-tx' } });
+  };
+  const { journal } = await buyFromAgent({ sellerUrl: 'https://seller.test', agentIdentifier: AGENT, inputData: { request: 'x' }, mps: f.mps, store, fetch: seller, pollMs: 1, journalId: 'a2a_tx' });
+  assert.equal(journal.resultHash, 'rh');
+  assert.deepEqual(journal.transactions, { payment: 'pay-tx', result: 'res-tx' });
+  assert.equal((await store.read('a2a_tx')).transactions.result, 'res-tx');
+});

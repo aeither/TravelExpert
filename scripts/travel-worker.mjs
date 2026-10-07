@@ -9,7 +9,11 @@ import { createEveClient } from './eve-client.mjs';
 import { hostedPaidConfiguration } from './hosted.mjs';
 import { createAdvisor } from './advisor.mjs';
 import { travelPrompt } from './agent-api.mjs';
-import { txUrl, CLOSING, NOT_OPENED, answerToOffer, collectionComment, feeFor, handoverText, paymentComment, proofBlock } from './booking-copy.mjs';
+import { txUrl, CLOSING, NOT_BOOKED, REJECTED_AFTER_ESCROW, answerToOffer, collectionComment, feeFor, handoverText, insertBeforeOffer, offerFeeLine, paymentComment, proofBlock } from './booking-copy.mjs';
+import { createOriginBooker, guestFromRequest } from './origin-booking.mjs';
+import { createReviewer } from './audit.mjs';
+import { readLedgerEvidence, renderReceiptFor } from './receipt.mjs';
+import { buyService, paidEnabled } from '../agent/lib/paid.ts';
 import { inAllowedWorkspace } from './workspaces.mjs';
 
 const POLL_MS = 10_000;
@@ -24,7 +28,8 @@ const flat = value => String(value ?? '').replace(/\s+/g, ' ').slice(0, 60);
 export function describeAction(action) {
   const input = action?.input ?? {};
   switch (action?.toolName) {
-    case 'destination_info': return `Orchestrator → Expert Travel Agency knowledge desk (another agent): asking about ${flat(input.destination)}…`;
+    case 'destination_info': return `Orchestrator → Expert Travel Agency knowledge desk (another agent): asking about ${flat(input.destination)}. Paying 0.5 test USDM through Masumi…`;
+    case 'search_flights': return `Orchestrator → Expert Travel Agency flight search: ${flat(input.origin)} → ${flat(input.destination)} on ${flat(input.departure_date)}. Paying 1 test USDM through Masumi…`;
     case 'search_hotels': return `Orchestrator → Expert Travel Agency hotel search: ${flat(input.city)}, check-in ${flat(input.check_in)}, ${flat(input.nights)} night(s). Paying 1 test USDM through Masumi, so this waits for on-chain confirmation (about 2 to 3 minutes)…`;
     case 'save_plan': return 'Saving your plan, so replying "book" can continue it…';
     default: return undefined;
@@ -32,6 +37,7 @@ export function describeAction(action) {
 }
 export function describeResult(result) {
   const out = result?.output;
+  if (Array.isArray(out?.offers)) return `Found ${out.offers.length} flight offer${out.offers.length === 1 ? '' : 's'} (test fares).`;
   if (Array.isArray(out?.hotels)) return `Found ${out.hotels.length} hotel option${out.hotels.length === 1 ? '' : 's'} with live rates.`;
   if (typeof out?.answer === 'string') return 'The knowledge desk answered.';
   if (out?.saved) return 'Plan saved.';
@@ -42,11 +48,16 @@ export function describeResult(result) {
 const TURN_TIMEOUT_MS = 20 * 60_000;
 const withTimeout = (work, ms) => { let timer; return Promise.race([work, new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('The agent took too long.')), ms); })]).finally(() => clearTimeout(timer)); };
 
-export function createTravelWorker({ api, mps, eve, advisor, store, source, coworkerId, dataDir, log = console.log, runAgent, turnTimeoutMs = TURN_TIMEOUT_MS }) {
+// `booker` books LiteAPI stays through the Expert Travel Agency; `review` audits the plan with a paid agent; `receipt` renders the purchase ledger.
+// All three are optional, so the worker still plans and opens advisor checkouts without them. `concurrency` caps tasks running side by side.
+export function createTravelWorker({ api, mps, eve, advisor, booker, review, receipt, guest, store, source, coworkerId, dataDir, log = console.log, runAgent, turnTimeoutMs = TURN_TIMEOUT_MS, concurrency = 4 }) {
   let polls = 0;
   const events = async id => (await api.get(`/v1/tasks/${safeId(id)}/events?limit=100`)).data;
   const post = (id, body) => api.post(`/v1/tasks/${safeId(id)}/events`, body);
-  const turn = runAgent ?? ((prompt, onEvent) => withTimeout(runTurn(prompt, onEvent), turnTimeoutMs));
+  // The scarce resource is a running agent turn, not polling a task: at most `concurrency` turns run at once, the rest wait their turn.
+  let active = 0; const waiting = [];
+  const slot = async work => { if (active >= concurrency) await new Promise(resolve => waiting.push(resolve)); active++; try { return await work(); } finally { active--; waiting.shift()?.(); } };
+  const turn = (prompt, onEvent) => slot(() => runAgent ? runAgent(prompt, onEvent) : withTimeout(runTurn(prompt, onEvent), turnTimeoutMs));
   async function runTurn(prompt, onEvent) {
     const { session } = await eve.sessions.create();
     const response = await session.send(prompt);
@@ -110,19 +121,58 @@ export function createTravelWorker({ api, mps, eve, advisor, store, source, cowo
     await post(task.id, { comment: 'Working on your request. I will report each step here.' }).catch(() => {});
     const answer = await turn(`${travelPrompt(text)}\nTask reference: ${task.id}`, reporter(task.id));
     const saved = await readPlan(dataDir, task.id);
-    if (saved) { st.plan = saved; return askUser(task, st, save, answer, 'offer'); }
+    if (saved) {
+      st.plan = saved;
+      let text = answer, receiptBlock = '';
+      // The audit and the receipt are extras: a failure in either never blocks the plan.
+      if (review) { try { text = (await review({ taskId: task.id, plan: saved, answer, revise: prompt => turn(prompt), say: line => post(task.id, { comment: line }).catch(() => {}) })) || answer; } catch (error) { log(`task ${task.id}: review failed: ${String(error?.message ?? error).slice(0, 120)}`); } }
+      if (receipt) { try { receiptBlock = await receipt(task.id); } catch (error) { log(`task ${task.id}: receipt failed: ${String(error?.message ?? error).slice(0, 120)}`); } }
+      return askUser(task, st, save, insertBeforeOffer(text, [receiptBlock, offerFeeLine(saved)]), 'offer');
+    }
     // Asking something without having planned anything is a question: the task waits for the traveller.
     if (/\?/.test(answer) && !/checkout|book/i.test(answer)) { st.context = [st.context, st.reply].filter(Boolean).join(' '); return askUser(task, st, save, answer, 'ask'); }
     return finish(task, st, save, answer);
   }
 
+  // Picks what the traveller can actually get, before any money moves. LiteAPI stays are re-checked and booked through the Expert Travel Agency;
+  // advisor stays open a pay-at-property checkout, or fall back to the pre-filled hotel page.
+  async function chooseCheckout(task, st) {
+    const plan = st.plan;
+    const said = text => post(task.id, { comment: text }).catch(() => {});
+    if (plan.hotel.source === 'liteapi') {
+      const candidates = [plan.hotel, ...(plan.alternatives ?? [])].filter(h => h.source === 'liteapi' && h.bookable);
+      if (!booker || !candidates.length) { st.failure = 'booking is not available for this stay'; return false; }
+      await said(`Orchestrator → Expert Travel Agency booking desk: checking that ${plan.hotel.name} is still bookable at the quoted price (nothing is charged yet)…`);
+      let reason = 'no hotel could be re-checked';
+      for (const hotel of candidates) {
+        const found = await booker.check(plan, hotel);
+        if (!found.ok) { reason = found.reason ?? reason; continue; }
+        st.checkout = { kind: 'reservation', offer: found.offer };
+        st.plan = { ...plan, hotel: found.hotel, ...(hotel.id !== plan.hotel.id ? { swappedFrom: plan.hotel.name } : {}) };
+        return true;
+      }
+      st.failure = reason; return false;
+    }
+    await said('Orchestrator → Expert Travel Advisor: opening the hotel checkout (nothing is charged yet)…');
+    const opened = await advisor.openCheckout(plan);
+    if (opened.opened) {
+      st.checkout = { kind: 'checkout', ...opened.checkout };
+      st.plan = { ...plan, hotel: opened.hotel, ...(opened.swappedFrom ? { swappedFrom: opened.swappedFrom } : {}) };
+      return true;
+    }
+    if (opened.linkOnly) { st.checkout = { kind: 'link', url: opened.linkOnly.url }; st.plan = { ...plan, hotel: opened.linkOnly.hotel }; return true; }
+    st.failure = opened.failure_reason ?? null; return false;
+  }
+
   async function booking(task, st, save) {
     const p = st.paid ?? {};
     if (!st.checkout) {
-      await post(task.id, { comment: 'Orchestrator → Expert Travel Advisor: opening the hotel checkout (nothing is charged yet)…' }).catch(() => {});
-      const opened = await advisor.openCheckout(st.plan);
-      if (!opened.opened) return finish(task, st, save, NOT_OPENED(opened.failure_reason));
-      st.checkout = opened.checkout; st.plan = { ...st.plan, hotel: opened.hotel, ...(opened.swappedFrom ? { swappedFrom: opened.swappedFrom } : {}) };
+      if (!(await chooseCheckout(task, st))) {
+        const others = [st.plan.hotel, ...(st.plan.alternatives ?? [])].map(h => h.name).slice(0, 3);
+        return finish(task, st, save, NOT_BOOKED(st.failure ?? 'no checkout was available', others), 'FAILED');
+      }
+      // A pre-filled page is handed over for free: no fee for something that is not a reservation.
+      if (st.checkout.kind === 'link') return finish(task, st, save, handoverText(st.plan, st.checkout, task.id));
       st.fee = feeFor(st.plan.hotel.total); await save();
     }
     if (!p.stage) {
@@ -147,11 +197,31 @@ export function createTravelWorker({ api, mps, eve, advisor, store, source, cowo
         return 'waiting';
       }
       paid.escrowTx = now.CurrentTransaction.txHash; paid.fundedPayment = now; paid.stage = 'escrow-confirmed';
-      await post(task.id, { comment: `Escrow confirmed on-chain: ${txUrl(paid.escrowTx)}\nSubmitting my result hash…` }).catch(() => {});
-      st.answer = handoverText(st.plan, st.checkout, task.id); await save();
+      await post(task.id, { comment: `Escrow confirmed on-chain: ${txUrl(paid.escrowTx)}\n${st.checkout.kind === 'reservation' ? `Booking ${st.plan.hotel.name} now…` : 'Submitting my result hash…'}` }).catch(() => {});
+      await save();
     }
     if (paid.stage === 'escrow-confirmed') {
       if (Date.now() >= Date.parse(paid.plan.submitResultTime)) throw new Error('Result deadline passed before the hash was submitted.');
+      if (st.checkout.kind === 'reservation' && !st.booking) {
+        // The supplier booking is the one irreversible step: its stage is saved first and an unknown outcome is never retried.
+        if (st.bookStage === 'book-pending') { st.inspectionRequired = true; await save(); return 'inspection_required'; }
+        st.bookStage = 'book-pending'; await save();
+        const who = guestFromRequest([st.input, st.context, st.reply].filter(Boolean).join(' '), guest ?? booker.guest);
+        try { st.booking = await booker.book({ taskId: task.id, hotel: st.plan.hotel, offer: st.checkout.offer, total: st.plan.hotel.total, guest: who, adults: st.plan.request.adults }); }
+        catch (error) {
+          log(`task ${task.id}: booking failed (${error?.code ?? 'unknown'}): ${String(error?.message ?? error).slice(0, 120)}`);
+          if (error?.definite) {
+            st.bookStage = 'rejected'; st.phase = 'blocked'; st.reason = 'BOOKING_REJECTED_AFTER_ESCROW'; await save();
+            await post(task.id, { comment: REJECTED_AFTER_ESCROW(String(error.message).slice(0, 100)) }).catch(() => {});
+            return 'blocked';
+          }
+          st.inspectionRequired = true; await save();
+          await post(task.id, { comment: 'I could not confirm whether the hotel booking went through. I will not try again on my own: I am checking it manually and nothing more will be charged.' }).catch(() => {});
+          return 'inspection_required';
+        }
+        st.bookStage = 'booked'; await save();
+      }
+      st.answer ??= handoverText(st.plan, st.checkout, task.id, st.booking); await save();
       paid.stage = 'submit-pending'; await save();
       paid.resultHash = (await submitSellerResult(mps, paid.plan, paid.fundedPayment, st.answer)).resultHash;
       paid.stage = 'awaiting-result'; await save();
@@ -241,20 +311,35 @@ export function createTravelWorker({ api, mps, eve, advisor, store, source, cowo
     return 'collecting';
   }
 
-  async function tick() {
+  // Each task runs on its own: a 3-minute paid search no longer holds up every other task. A task is never started twice
+  // (one slot per task id) and agent turns are limited by `concurrency` (see `slot`). The poll lock only covers scheduling.
+  const inflight = new Map();
+  let finished = [];
+  function schedule(key, work) {
+    if (inflight.has(key) || inflight.size >= concurrency * 10) return null;
+    const run = (async () => { try { return await work(); } catch (error) { log(`${key}: ${String(error?.message ?? error).slice(0, 160)}`); return 'error'; } })()
+      .then(outcome => { inflight.delete(key); finished.push(outcome); return outcome; });
+    inflight.set(key, run);
+    return run;
+  }
+  const idle = async () => { while (inflight.size) await Promise.all([...inflight.values()]); };
+  const drain = () => { const out = finished.filter(x => !['skipped', 'waiting', 'collecting'].includes(x)); finished = []; return out; };
+
+  async function tick({ wait = true } = {}) {
     const release = await store.lock(coworkerId);
+    const started = [];
+    const run = (key, work) => { const job = schedule(key, work); if (job) started.push(job); };
     try {
-      const out = [];
       for (const id of await store.ids()) {
         const st = await store.read(id);
-        if (st?.phase === 'collecting' && !st.inspectionRequired) { try { out.push(await collect(st)); } catch { out.push('collect_check_failed'); } }
+        if (st?.phase === 'collecting' && !st.inspectionRequired) run(`task:${id}`, async () => { try { return await collect(st); } catch { return 'collect_check_failed'; } });
       }
       // Follow-ups on tasks finished in the last two days, checked about every 30 seconds.
       if (++polls % 3 === 0) {
         for (const id of await store.ids()) {
           const st = await store.read(id);
           if (!st || st.inspectionRequired || !['completed', 'collecting'].includes(st.phase) || !st.final || Date.now() - Date.parse(st.finishedAt ?? 0) > FOLLOW_UP_WINDOW_MS) continue;
-          try { const task = (await api.get(`/v1/tasks/${safeId(id)}`)).data; if (await followUps(st, task)) out.push('follow_up'); } catch { out.push('follow_up_failed'); }
+          run(`task:${id}`, async () => { try { const task = (await api.get(`/v1/tasks/${safeId(id)}`)).data; return (await followUps(st, task)) ? 'follow_up' : 'skipped'; } catch { return 'follow_up_failed'; } });
         }
       }
       const seen = new Set();
@@ -265,26 +350,34 @@ export function createTravelWorker({ api, mps, eve, advisor, store, source, cowo
           seen.add(task.id);
           const st = await store.read(task.id);
           if (st?.inspectionRequired) continue;
-          try { out.push(await advance(task)); } catch (error) { log(`task ${task.id}: ${String(error?.message ?? error).slice(0, 160)}`); out.push('error'); }
+          run(`task:${task.id}`, () => advance(task));
         }
       }
-      return out.filter(x => !['skipped', 'waiting', 'collecting'].includes(x));
     } finally { await release(); }
+    if (!wait) return drain();
+    await Promise.all(started);
+    return drain();
   }
-  return { tick, advance, collect, followUps };
+  return { tick, advance, collect, followUps, idle, drain };
 }
 
 async function main() {
   const config = hostedPaidConfiguration();
   const dataDir = resolve(process.env.DATA_DIR || resolve(import.meta.dirname, '../.local'));
+  const env = process.env;
+  const guest = { given_name: env.GUEST_GIVEN_NAME || 'Alex', family_name: env.GUEST_FAMILY_NAME || 'Traveller', email: env.GUEST_EMAIL || 'alex.traveller@example.com' };
+  // LiteAPI booking, the paid Trip Auditor and the receipt are each switched on by their own settings, so the worker still runs without them.
+  const booker = env.ORIGIN_API_KEY ? createOriginBooker({ baseUrl: env.ORIGIN_API_URL || 'https://origin-api-production-d268.up.railway.app', apiKey: env.ORIGIN_API_KEY, guest }) : undefined;
+  const review = paidEnabled('audit') ? createReviewer({ buy: buyService, readEvidence: readLedgerEvidence, log: message => console.log(message) }) : undefined;
   const worker = createTravelWorker({
-    api: createHttpClient(process.env.SOKOSUMI_COWORKER_API_KEY), mps: config.mps, eve: createEveClient(), advisor: createAdvisor(process.env.ADVISOR_URL || 'https://expert-travel-advisor-eve.vercel.app'),
+    api: createHttpClient(env.SOKOSUMI_COWORKER_API_KEY), mps: config.mps, eve: createEveClient(), advisor: createAdvisor(env.ADVISOR_URL || 'https://expert-travel-advisor-eve.vercel.app'),
+    booker, review, receipt: renderReceiptFor, guest, concurrency: Number(env.WORKER_CONCURRENCY || 4),
     store: await createStore(resolve(dataDir, 'travel')), source: config.source, coworkerId: config.coworkerId, dataDir,
   });
   const stop = new AbortController();
   for (const signal of ['SIGINT', 'SIGTERM']) process.once(signal, () => stop.abort());
   while (!stop.signal.aborted) {
-    try { const done = await worker.tick(); if (done.length) console.log(JSON.stringify({ status: done })); }
+    try { const done = await worker.tick({ wait: false }); if (done.length) console.log(JSON.stringify({ status: done })); }
     catch (error) { console.error('travel worker tick failed:', String(error?.message ?? error).slice(0, 160)); }
     try { await delay(POLL_MS, undefined, { signal: stop.signal }); } catch { break; }
   }

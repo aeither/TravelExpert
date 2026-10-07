@@ -9,14 +9,14 @@ Railway project `origin-masumi-live` (`255138b6-6400-4391-84d2-c038bd8ca0ae`), e
 | Service | Role |
 | --- | --- |
 | `travel-expert` (this repo) | eve agent (loopback), public MIP-003 API, Sokosumi paid worker. Public URL https://travel-expert-production.up.railway.app. Volume at `/data`. |
-| `origin-api` (ExpertTravelAgency repo) | Hotel search and checkout links. Called by the agent's `search_hotels` tool. |
+| `origin-api` ([ExpertTravelAgency repo](https://github.com/aeither/ExpertTravelAgency)) | The seller. Three paid MIP-003 services (`trip_request_json` hotel and flight search, `knowledge_request_json`, `audit_request_json`), LiteAPI sandbox booking, Duffel test flights, Advisor fallback. |
 | `mps` | Masumi Payment Service shared by both agents. |
 
 `scripts/railway-start.mjs` is the container entry point. It starts `eve start` on 127.0.0.1:2000, the public API on `$PORT` and, once configured, the paid worker. A generated per-boot password protects the loopback eve routes (`agent/channels/eve.ts`). Journals live in `/data/worker`, `/data/comments`, `/data/agent-api` and survive redeploys.
 
 ## Variables (names only)
 
-`OPENROUTER_API_KEY`, `OPENROUTER_MODEL` (default `openrouter/free`), `ORIGIN_API_URL`, `MPS_URL`, `MPS_TOKEN`, `BLOCKFROST_API_KEY_PREPROD`, `DATA_DIR=/data`, `ALLOWED_HOSTS` (public hostname), `MASUMI_AGENT_IDENTIFIER`, `MASUMI_SMART_CONTRACT_ADDRESS`, `MASUMI_SELLER_VKEY`, `MASUMI_SELLER_ADDRESS`, `MASUMI_SOURCE_INDEX`, `SOKOSUMI_COWORKER_ID`, `SOKOSUMI_COWORKER_API_KEY`. The OpenRouter key, MPS token and Blockfrost key are Railway references to `origin-api` and `mps`, so they are not duplicated.
+`OPENROUTER_API_KEY`, `OPENROUTER_MODEL` (default `openrouter/free`), `ORIGIN_API_URL`, `ORIGIN_API_KEY` (search detail, LiteAPI booking), `A2A_PAID_SEARCH=1`, `A2A_PAID_KNOWLEDGE=1`, `A2A_AUDIT=1`, `A2A_TASK_CAP_ATOMIC` (default 4000000), `A2A_MAX_PER_HOUR`, `WORKER_CONCURRENCY` (default 4), `MPS_BUYER_TOKEN`, `A2A_AGENT_IDENTIFIER`, `MPS_URL`, `MPS_TOKEN`, `BLOCKFROST_API_KEY_PREPROD`, `DATA_DIR=/data`, `ALLOWED_HOSTS` (public hostname), `MASUMI_AGENT_IDENTIFIER`, `MASUMI_SMART_CONTRACT_ADDRESS`, `MASUMI_SELLER_VKEY`, `MASUMI_SELLER_ADDRESS`, `MASUMI_SOURCE_INDEX`, `SOKOSUMI_COWORKER_ID`, `SOKOSUMI_COWORKER_API_KEY`. The OpenRouter key, MPS token and Blockfrost key are Railway references to `origin-api` and `mps`, so they are not duplicated.
 
 Until `MASUMI_AGENT_IDENTIFIER` and the Coworker key are set the service answers `/availability` as `unavailable` and does not start the worker.
 
