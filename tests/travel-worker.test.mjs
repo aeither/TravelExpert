@@ -165,3 +165,17 @@ test('progress lines name the other agent and what it found', async () => {
   assert.equal(describeResult({ output: { hotels: [{}, {}] } }), 'Found 2 hotel options with live rates.');
   assert.equal(describeResult({ output: { answer: 'x' } }), 'The knowledge desk answered.');
 });
+
+test('a hung agent turn fails the task after the time limit instead of blocking the worker', async t => {
+  const dir = await mkdtemp(resolve(tmpdir(), 'travel-worker-'));
+  t.after(() => rm(dir, { recursive: true, force: true }));
+  const store = await createStore(resolve(dir, 'travel'));
+  const task = { id: 'task_hung1234', status: 'READY', description: 'Plan 3 days in Cebu from 20 November', assigneeId: 'cw1' };
+  const sent = [];
+  const hang = { sessions: { create: async () => ({ session: { send: async () => ({ async *[Symbol.asyncIterator]() { await new Promise(() => {}); } }) } }) } };
+  const worker = createTravelWorker({ api: { get: async () => ({ data: [] }), post: async (_p, body) => { sent.push(body); return { data: { id: 'x', status: body.status } }; } },
+    mps: {}, eve: hang, advisor: {}, store, source, coworkerId: 'cw1', dataDir: dir, log: () => {}, turnTimeoutMs: 50 });
+  assert.equal(await worker.advance(task), 'failed');
+  assert.equal(sent.at(-1).status, 'FAILED');
+  assert.equal((await store.read(task.id)).phase, 'blocked');
+});

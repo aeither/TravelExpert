@@ -38,11 +38,16 @@ export function describeResult(result) {
   return undefined;
 }
 
-export function createTravelWorker({ api, mps, eve, advisor, store, source, coworkerId, dataDir, log = console.log, runAgent }) {
+// A turn waits on the model and, for hotel search, on a Cardano confirmation (about 3 minutes). One that never ends would hold the poll lock and freeze every task.
+const TURN_TIMEOUT_MS = 20 * 60_000;
+const withTimeout = (work, ms) => { let timer; return Promise.race([work, new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('The agent took too long.')), ms); })]).finally(() => clearTimeout(timer)); };
+
+export function createTravelWorker({ api, mps, eve, advisor, store, source, coworkerId, dataDir, log = console.log, runAgent, turnTimeoutMs = TURN_TIMEOUT_MS }) {
   let polls = 0;
   const events = async id => (await api.get(`/v1/tasks/${safeId(id)}/events?limit=100`)).data;
   const post = (id, body) => api.post(`/v1/tasks/${safeId(id)}/events`, body);
-  const turn = runAgent ?? (async (prompt, onEvent) => {
+  const turn = runAgent ?? ((prompt, onEvent) => withTimeout(runTurn(prompt, onEvent), turnTimeoutMs));
+  async function runTurn(prompt, onEvent) {
     const { session } = await eve.sessions.create();
     const response = await session.send(prompt);
     if (!onEvent) {
@@ -59,7 +64,7 @@ export function createTravelWorker({ api, mps, eve, advisor, store, source, cowo
     }
     if (failed || !message.trim()) throw new Error(`The agent returned no answer.${reason ? ` ${reason}` : ''}`);
     return message.trim();
-  });
+  }
 
   // The traveller's answer to our last question: the newest user comment after it, or a new description set back to Ready.
   async function reply(task, st) {
