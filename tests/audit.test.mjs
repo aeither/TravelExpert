@@ -26,7 +26,7 @@ test('a revise verdict triggers exactly one revision turn that keeps the closing
   const verdict = { verdict: 'revise', summary: '1 of 8 claims unsupported', claims: [{ claim: 'Socorro mini-zoo', status: 'unsupported' }], rewrite_hints: ['Remove "Socorro mini-zoo": not in the knowledge desk answer.'] };
   const prompts = [];
   const review = createReviewer({ buy: async () => ({ result: JSON.stringify(verdict) }), readEvidence: async () => evidence });
-  const text = await review({ taskId: 'task_abcdefgh', plan, answer, say: async () => {}, revise: async p => { prompts.push(p); return '# Cebu fixed\n\nWould you like me to open the checkout for the top pick? Reply "book" to continue, or "no" to finish.'; } });
+  const text = await review({ taskId: 'task_abcdefgh', plan, answer, say: async () => {}, revise: async p => { prompts.push(p); return '# Cebu fixed\nFili: 300 USD total\n\nWould you like me to open the checkout for the top pick? Reply "book" to continue, or "no" to finish.'; } });
   assert.equal(prompts.length, 1); assert.match(prompts[0], /^Mode: revise/); assert.match(prompts[0], /Socorro mini-zoo/);
   assert.match(text, /Cebu fixed/); assert.match(text, /Audit by the Trip Auditor: revised/);
 });
@@ -51,4 +51,11 @@ test('with no evidence recorded there is nothing to audit against, so no purchas
   const review = createReviewer({ buy: async () => { bought = true; return {}; }, readEvidence: async () => ({ hotels: [], flights: [], knowledge: [] }) });
   const text = await review({ taskId: 'task_abcdefgh', plan, answer, say: async () => {}, revise: async () => '' });
   assert.equal(bought, false); assert.match(text, /not audited/i);
+});
+
+test('a revision that drops the saved top pick is discarded: booking must act on a hotel the plan still shows', async () => {
+  const verdict = { verdict: 'revise', summary: 's', claims: [], rewrite_hints: ['fix'] };
+  const review = createReviewer({ buy: async () => ({ result: JSON.stringify(verdict) }), readEvidence: async () => evidence });
+  const text = await review({ taskId: 'task_abcdefgh', plan, answer, say: async () => {}, revise: async () => '# Cebu\n(no hotel selected)\n\nWould you like me to open the checkout for the top pick? Reply "book" to continue, or "no" to finish.' });
+  assert.match(text, /Fili: 300 USD total/); assert.match(text, /could not be applied/); assert.doesNotMatch(text, /no hotel selected/);
 });

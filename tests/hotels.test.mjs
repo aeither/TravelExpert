@@ -125,3 +125,14 @@ test('save_plan keeps the picked hotel with its offer, source and the family', a
   assert.equal(plan.alternatives[0].name, 'Alt');
   assert.match((await savePlan({ ...input(), task_ref: TASK, hotel_id: 'nope' }, dir, { fetcher, env })).error, /not in the search results/);
 });
+
+test('save_plan records the searched hotels as audit evidence even when search_hotels ran without a task reference', async () => {
+  clearHotelCaches();
+  const dir = await mkdtemp(join(tmpdir(), 'plans-'));
+  const ledger = await ledgerFor();
+  const fetcher = async () => Response.json(liteapi([lite('1', 'Top', '160.00', 9), lite('2', 'Alt', '200.00', 8.2)]));
+  await searchHotels(input(), { fetcher, ledger, env });
+  assert.equal((await ledger.read(TASK)).evidence.hotels.length, 0);
+  await savePlan({ ...input(), task_ref: TASK, hotel_id: '1' }, dir, { fetcher, ledger, env });
+  assert.deepEqual((await ledger.read(TASK)).evidence.hotels.map(h => h.name), ['Top', 'Alt']);
+});

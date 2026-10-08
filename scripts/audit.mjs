@@ -31,7 +31,8 @@ export function createReviewer({ buy, readEvidence, log = () => {} }) {
       revised = await revise(['Mode: revise', `Task reference: ${taskId}`, 'Draft plan:', answer, '', 'Audit findings. Remove or correct exactly these, add nothing new:', ...verdict.rewrite_hints.slice(0, 10).map(h => `- ${h}`)].join('\n'));
     } catch (error) { log(`revision failed: ${String(error?.message ?? error).slice(0, 120)}`); }
     // A revision must still end with the booking question, otherwise the task could not continue.
-    if (typeof revised === 'string' && /Would you like me to/.test(revised)) return insertBeforeOffer(revised.trim(), [line(`Audit by the Trip Auditor: revised (${verdict.summary ?? 'unsupported claims removed'}).`)]);
+    // ...and must keep the saved top pick, otherwise "book" would act on a hotel the plan no longer shows.
+    if (typeof revised === 'string' && /Would you like me to/.test(revised) && (!plan.hotel?.name || revised.includes(plan.hotel.name))) return insertBeforeOffer(revised.trim(), [line(`Audit by the Trip Auditor: revised (${verdict.summary ?? 'unsupported claims removed'}).`)]);
     return insertBeforeOffer(answer, [line(`Audit by the Trip Auditor: ${verdict.summary ?? 'some claims could not be verified'}. The corrections could not be applied, so treat the unverified parts with care.`)]);
   };
 }

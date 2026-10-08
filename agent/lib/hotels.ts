@@ -58,11 +58,7 @@ async function details(id: string, fetcher: typeof fetch, key?: string) {
 export function clearHotelCaches() { detailCache.clear(); }
 
 export async function searchHotels(input: SearchInput, deps: Deps = {}) {
-  const { result, raw } = await searchRaw(input, deps);
-  if (result.error || !input.task_ref) return result;
-  const ledger = deps.ledger ?? await defaultLedger(paidConfig(deps.env)?.ledgerDir ?? `${(deps.env ?? process.env).DATA_DIR || '.local'}/ledger`);
-  try { for (const h of raw.slice(0, 8)) await ledger.addEvidence(input.task_ref, 'hotels', { name: h.name, total: h.total, nightly: Number(h.nightly.toFixed(2)), currency: h.currency, free_cancellation: h.free_cancellation, source: h.source }); } catch { /* evidence is best effort */ }
-  return result;
+  return (await searchRaw(input, deps)).result;
 }
 
 // Same search, also returning the ranked hotels so save_plan can keep the fields needed to book later.
@@ -101,6 +97,13 @@ export async function searchRaw(input: SearchInput, deps: Deps = {}): Promise<{ 
   const second = rankStays(first.ranked, { children: children.length });
   ranking = { ranked: second.ranked, dropped_over_budget: first.dropped_over_budget, dropped_children: first.dropped_children + second.dropped_children };
   const hotels = ranking.ranked;
+  // Every search that belongs to a task leaves its results in the task ledger, whichever tool ran it: the audit checks the plan against them.
+  if (input.task_ref && hotels.length) {
+    try {
+      const ledger = deps.ledger ?? await defaultLedger(paidConfig(env)?.ledgerDir ?? `${env.DATA_DIR || '.local'}/ledger`);
+      for (const h of hotels.slice(0, 8)) await ledger.addEvidence(input.task_ref, 'hotels', { name: h.name, total: h.total, nightly: Number(h.nightly.toFixed(2)), currency: h.currency, free_cancellation: h.free_cancellation, source: h.source });
+    } catch { /* evidence is best effort */ }
+  }
   if (!hotels.length) {
     const cheapest = [...all].sort((a, b) => a.nightly - b.nightly)[0];
     const budgetMiss = input.budget_per_night !== undefined && cheapest && ranking.dropped_children === 0 && all.length > 0;
