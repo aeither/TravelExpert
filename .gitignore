@@ -8,3 +8,4 @@ node_modules/
 .workflow/
 .output/
 dist/
+.DS_Store
